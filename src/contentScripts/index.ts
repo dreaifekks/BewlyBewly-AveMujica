@@ -8,6 +8,7 @@ import { BEWLY_MOUNTED } from '~/constants/globalEvents'
 import { settings } from '~/logic'
 import { setupApp } from '~/logic/common-setup'
 import RESET_BEWLY_CSS from '~/styles/reset.css?raw'
+import { syncAccessKey } from '~/utils/authProvider'
 import { runWhenIdle } from '~/utils/lazyLoad'
 import { compareVersions, injectCSS, isHomePage, isInIframe, isNotificationPage, isVideoOrBangumiPage } from '~/utils/main'
 import { SVG_ICONS } from '~/utils/svgIcons'
@@ -209,6 +210,8 @@ async function onDOMLoaded() {
   }
 
   if (isSupportedPages() || isSupportedIframePages()) {
+    await syncAccessKey()
+
     // Then inject the app
     if (isHomePage()) {
       injectApp()

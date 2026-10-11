@@ -6,6 +6,7 @@ import draggable from 'vuedraggable'
 import Radio from '~/components/Radio.vue'
 import { accessKey, settings } from '~/logic'
 import { useMainStore } from '~/stores/mainStore'
+import { setCurrentMobileCredential } from '~/utils/accountManager'
 import { getTVLoginQRCode, pollTVLoginQRCode, revokeAccessKey } from '~/utils/authProvider'
 
 import SettingsItem from '../../components/SettingsItem.vue'
@@ -78,9 +79,19 @@ function pollLoginQRCode() {
       qrcodeMsg.value = pollRes.message
     if (pollRes.code === 0) {
       showQRCodeDialog.value = false
-      accessKey.value = pollRes.data.access_token
       clearInterval(pollLoginQRCodeInterval.value)
-      toast.success('授权成功')
+      try {
+        await setCurrentMobileCredential({
+          uid: String(pollRes.data.mid),
+          accessToken: pollRes.data.access_token,
+          expiresIn: pollRes.data.expires_in,
+        })
+        accessKey.value = pollRes.data.access_token
+        toast.success('授权成功')
+      }
+      catch (error) {
+        toast.error(error instanceof Error ? error.message : String(error))
+      }
     }
     else if (pollRes.code === 86038) {
       await setLoginQRCode()

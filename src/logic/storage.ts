@@ -4,7 +4,7 @@ import type { HomeSubPage } from '~/contentScripts/views/Home/types'
 import type { AppPage } from '~/enums/appEnums'
 
 export const storageDemo = useStorageLocal('webext-demo', 'Storage Demo')
-export const accessKey = useStorageLocal('accessKey', '')
+export const accessKey = ref('')
 
 export interface Settings {
   touchScreenOptimization: boolean

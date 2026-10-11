@@ -402,6 +402,14 @@ topbar:
     my_stream_info: My stream info
     my_courses: My courses
     log_out: Log out
+    switch_account: Switch account
+    saved_accounts: '{count} saved accounts'
+    no_saved_accounts: No saved accounts yet
+    add_account: Sign in to another account
+    add_account_failed: 'Could not open account sign-in: {message}'
+    mobile_token_ready: Mobile token connected
+    mobile_token_empty: No mobile token
+    switch_failed: 'Could not switch account: {message}'
   noti_dropdown:
     replys: Replys
     mentions: Mentions

@@ -59,10 +59,12 @@ interface APIMAP {
 }
 // 工厂函数API_LISTENER_FACTORY
 function apiListenerFactory(API_MAP: APIMAP) {
-  return async (message: Message, sender?: Browser.Runtime.MessageSender, sendResponse?: Function) => {
+  return (message: Message, sender?: Browser.Runtime.MessageSender, sendResponse?: Function) => {
     const contentScriptQuery = message.contentScriptQuery
     // 检测是否有contentScriptQuery
-    if (!contentScriptQuery || !API_MAP[contentScriptQuery])
+    if (!contentScriptQuery)
+      return
+    if (!API_MAP[contentScriptQuery])
       return console.error(`Cannot find this contentScriptQuery: ${contentScriptQuery}`)
     if (API_MAP[contentScriptQuery] instanceof Function)
       return (API_MAP[contentScriptQuery] as APIFunction)(message, sender, sendResponse)
@@ -71,8 +73,8 @@ function apiListenerFactory(API_MAP: APIMAP) {
 
     // eslint-disable-next-line node/prefer-global/process
     if (process.env.FIREFOX && sender && sender.tab && sender.tab.cookieStoreId) {
-      const cookies = await browser.cookies.getAll({ storeId: sender.tab.cookieStoreId })
-      return doRequest(message, api, sendResponse, cookies)
+      return browser.cookies.getAll({ storeId: sender.tab.cookieStoreId })
+        .then(cookies => doRequest(message, api, sendResponse, cookies))
     }
 
     return doRequest(message, api, sendResponse)

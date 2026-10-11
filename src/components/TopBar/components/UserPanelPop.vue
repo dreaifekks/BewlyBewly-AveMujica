@@ -1,13 +1,21 @@
 <script setup lang="ts">
 import DOMPurify from 'dompurify'
 import { useI18n } from 'vue-i18n'
+import { useToast } from 'vue-toastification'
 
-import { settings } from '~/logic'
+import { accessKey, settings } from '~/logic'
+import type { AccountListResult, PublicAccountProfile } from '~/types/accountManager'
+import {
+  registerCurrentAccount,
+  removeAccount,
+  startAddAccount,
+  switchAccount,
+} from '~/utils/accountManager'
 import api from '~/utils/api'
 import { revokeAccessKey } from '~/utils/authProvider'
 import { numFormatter } from '~/utils/dataFormatter'
 import { LV0_ICON, LV1_ICON, LV2_ICON, LV3_ICON, LV4_ICON, LV5_ICON, LV6_ICON, LV6_LIGHTNING_ICON } from '~/utils/lvIcons'
-import { getCSRF, getUserID, isHomePage } from '~/utils/main'
+import { getCSRF, getUserID, isHomePage, removeHttpFromUrl } from '~/utils/main'
 
 import type { UserInfo, UserStat } from '../types'
 
@@ -16,6 +24,16 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+const toast = useToast()
+
+const accountState = ref<AccountListResult | null>(null)
+const accountSwitcherOpen = ref(false)
+const accountListLoading = ref(false)
+const switchingUid = ref<string | null>(null)
+const addingAccount = ref(false)
+
+const accounts = computed(() => accountState.value?.accounts ?? [])
+const currentAccount = computed(() => accounts.value.find(account => account.current) ?? null)
 
 const mid = computed(() => {
   return getUserID()
@@ -82,15 +100,90 @@ onMounted(() => {
       if (res.code === 0)
         Object.assign(userStat, res.data)
     })
+  void refreshAccounts()
 })
 
 async function logout() {
-  revokeAccessKey()
+  const uid = String(props.userInfo.mid || getUserID())
+  await revokeAccessKey().catch((error) => {
+    console.error('[AccountManager] Failed to clear the current mobile token:', error)
+  })
   api.auth.logout({
     biliCSRF: getCSRF(),
-  }).then(() => {
+  }).then(async () => {
+    if (uid) {
+      await removeAccount(uid).catch((error) => {
+        console.error('[AccountManager] Failed to remove the logged-out account:', error)
+      })
+    }
     location.reload()
   })
+}
+
+async function refreshAccounts() {
+  if (!props.userInfo.mid || accountListLoading.value)
+    return
+
+  accountListLoading.value = true
+  try {
+    accountState.value = await registerCurrentAccount({
+      uid: String(props.userInfo.mid),
+      uname: props.userInfo.uname,
+      avatar: props.userInfo.face,
+    })
+  }
+  catch (error) {
+    console.error('[AccountManager] Failed to load account list:', error)
+  }
+  finally {
+    accountListLoading.value = false
+  }
+}
+
+async function toggleAccountSwitcher() {
+  accountSwitcherOpen.value = !accountSwitcherOpen.value
+  if (accountSwitcherOpen.value)
+    await refreshAccounts()
+}
+
+async function handleSwitchAccount(account: PublicAccountProfile) {
+  if (account.current || switchingUid.value)
+    return
+
+  switchingUid.value = account.uid
+  try {
+    const result = await switchAccount(account.uid, location.href)
+    if (!result.openedReplacementTab)
+      location.reload()
+  }
+  catch (error) {
+    toast.error(t('topbar.user_dropdown.switch_failed', {
+      message: error instanceof Error ? error.message : String(error),
+    }))
+  }
+  finally {
+    switchingUid.value = null
+  }
+}
+
+async function handleAddAccount() {
+  if (addingAccount.value)
+    return
+
+  addingAccount.value = true
+  try {
+    const result = await startAddAccount()
+    if (result.currentSessionCleared)
+      accessKey.value = ''
+  }
+  catch (error) {
+    toast.error(t('topbar.user_dropdown.add_account_failed', {
+      message: error instanceof Error ? error.message : String(error),
+    }))
+  }
+  finally {
+    addingAccount.value = false
+  }
 }
 
 const levelIcons: string[] = [
@@ -261,6 +354,107 @@ function handleClickChannel() {
 
     <div
       flex="~ justify-between col gap-1"
+      class="account-switcher"
+      mb-2 p-2 bg="$bew-fill-alt" rounded="$bew-radius"
+      shadow="[var(--bew-shadow-edge-glow-1),var(--bew-shadow-1)]"
+    >
+      <button
+        type="button"
+        class="account-switch-trigger"
+        :aria-expanded="accountSwitcherOpen"
+        @click="toggleAccountSwitcher"
+      >
+        <span class="account-switch-icon">
+          <span i-solar:transfer-horizontal-bold-duotone />
+        </span>
+        <span min-w-0 flex-1 text-left>
+          <span block font-semibold>{{ $t('topbar.user_dropdown.switch_account') }}</span>
+          <span block truncate text="xs $bew-text-3">
+            {{ $t('topbar.user_dropdown.saved_accounts', { count: accounts.length }) }}
+          </span>
+        </span>
+        <span
+          v-if="currentAccount"
+          class="account-token-badge"
+          :class="{ active: currentAccount.hasMobileToken }"
+        >
+          {{ currentAccount.hasMobileToken ? 'APP' : 'WEB' }}
+        </span>
+        <span
+          i-mingcute:down-line
+          duration-250
+          :class="{ 'rotate-180': accountSwitcherOpen }"
+        />
+      </button>
+
+      <Transition name="account-list">
+        <div v-if="accountSwitcherOpen" class="account-list">
+          <div v-if="accountListLoading && !accounts.length" class="account-list-empty">
+            <span i-svg-spinners:ring-resize />
+            {{ $t('common.loading') }}
+          </div>
+          <div v-else-if="!accounts.length" class="account-list-empty">
+            {{ $t('topbar.user_dropdown.no_saved_accounts') }}
+          </div>
+          <div
+            v-for="account in accounts"
+            v-else
+            :key="account.uid"
+            class="account-row"
+            :class="{ current: account.current }"
+          >
+            <button
+              type="button"
+              class="account-row-main"
+              :disabled="account.current || Boolean(switchingUid)"
+              @click="handleSwitchAccount(account)"
+            >
+              <span
+                class="account-avatar"
+                :style="{
+                  backgroundImage: account.avatar
+                    ? `url(${removeHttpFromUrl(account.avatar)})`
+                    : undefined,
+                }"
+              >
+                <span v-if="!account.avatar" i-solar:user-circle-bold-duotone />
+              </span>
+              <span min-w-0 flex-1 text-left>
+                <span block truncate font-semibold>{{ account.uname }}</span>
+                <span block truncate text="xs $bew-text-3">UID {{ account.uid }}</span>
+              </span>
+              <span
+                class="account-token-dot"
+                :class="{ active: account.hasMobileToken }"
+                :title="account.hasMobileToken
+                  ? $t('topbar.user_dropdown.mobile_token_ready')
+                  : $t('topbar.user_dropdown.mobile_token_empty')"
+              />
+              <span v-if="switchingUid === account.uid" i-svg-spinners:ring-resize />
+              <span v-else-if="account.current" i-mingcute:check-line text="$bew-theme-color" />
+              <span v-else i-mingcute:right-line text="$bew-text-3" />
+            </button>
+          </div>
+
+          <button
+            type="button"
+            class="account-add-button"
+            :disabled="addingAccount"
+            @click="handleAddAccount"
+          >
+            <span
+              :class="addingAccount
+                ? 'i-svg-spinners:ring-resize'
+                : 'i-solar:user-plus-rounded-bold-duotone'"
+            />
+            {{ $t('topbar.user_dropdown.add_account') }}
+          </button>
+        </div>
+      </Transition>
+    </div>
+
+    <div
+      flex="~ justify-between col gap-1"
       mb-2 p-2 bg="$bew-fill-alt" rounded="$bew-radius"
       shadow="[var(--bew-shadow-edge-glow-1),var(--bew-shadow-1)]"
     >
@@ -319,6 +513,103 @@ function handleClickChannel() {
 </template>
 
 <style lang="scss" scoped>
+.account-switcher {
+  overflow: hidden;
+}
+
+.account-switch-trigger {
+  --uno: "w-full min-h-48px px-3 py-2 flex items-center gap-3 rounded-$bew-radius";
+  --uno: "text-$bew-text-1 cursor-pointer transition-all duration-250 hover:bg-$bew-fill-2";
+}
+
+.account-switch-icon {
+  --uno: "w-32px h-32px shrink-0 grid place-items-center rounded-full text-lg";
+  background: radial-gradient(circle at 30% 25%, var(--bew-theme-color-30), transparent 65%), var(--bew-fill-2);
+  color: var(--bew-theme-color);
+  box-shadow: inset 0 0 0 1px var(--bew-theme-color-20);
+}
+
+.account-token-badge {
+  --uno: "px-1.5 py-1 rounded text-10px font-bold leading-none";
+  color: var(--bew-text-3);
+  background: var(--bew-fill-2);
+
+  &.active {
+    color: var(--bew-theme-color);
+    background: var(--bew-theme-color-10);
+    box-shadow: inset 0 0 0 1px var(--bew-theme-color-20);
+  }
+}
+
+.account-list {
+  --uno: "mt-1 pt-2";
+  border-top: 1px solid var(--bew-border-color);
+}
+
+.account-row {
+  --uno: "mb-1 last:mb-0 flex items-center gap-1 rounded-$bew-radius";
+  transition: background-color 0.2s ease;
+
+  &:hover,
+  &.current {
+    background: var(--bew-fill-2);
+  }
+}
+
+.account-row-main {
+  --uno: "min-w-0 flex-1 px-2 py-2 flex items-center gap-2 rounded-$bew-radius";
+  --uno: "text-$bew-text-1 transition-all duration-200";
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+.account-avatar {
+  --uno: "w-34px h-34px shrink-0 rounded-full grid place-items-center text-xl";
+  background-color: var(--bew-fill-3);
+  background-position: center;
+  background-size: cover;
+  box-shadow: inset 0 0 0 1px var(--bew-border-color);
+}
+
+.account-token-dot {
+  --uno: "w-8px h-8px rounded-full shrink-0";
+  background: var(--bew-text-3);
+  box-shadow: 0 0 0 3px var(--bew-fill-1);
+
+  &.active {
+    background: var(--bew-success-color);
+    box-shadow: 0 0 0 3px var(--bew-success-color-20);
+  }
+}
+
+.account-list-empty {
+  --uno: "min-h-64px px-3 flex items-center justify-center gap-2 text-sm text-$bew-text-3";
+}
+
+.account-add-button {
+  --uno: "w-full mt-2 px-3 py-2 flex items-center justify-center gap-2 rounded-$bew-radius";
+  --uno: "text-sm font-semibold text-$bew-theme-color bg-$bew-theme-color-10";
+  --uno: "hover:bg-$bew-theme-color-20 transition-all duration-200";
+
+  &:disabled {
+    --uno: "opacity-50 cursor-wait";
+  }
+}
+
+.account-list-enter-active,
+.account-list-leave-active {
+  transition: all 0.22s ease;
+  transform-origin: top;
+}
+
+.account-list-enter-from,
+.account-list-leave-to {
+  opacity: 0;
+  transform: translateY(-6px) scaleY(0.96);
+}
+
 .level :deep(svg) {
   --uno: "w-25px h-16px";
 }

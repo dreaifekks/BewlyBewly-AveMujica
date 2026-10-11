@@ -382,6 +382,14 @@ topbar:
     my_stream_info: 實況資訊
     my_courses: 我嘅課程
     log_out: 登出
+    switch_account: 切換帳號
+    saved_accounts: 已儲存 {count} 個帳號
+    no_saved_accounts: 暫時未有已儲存帳號
+    add_account: 登入其他帳號
+    add_account_failed: '開唔到新帳號登入：{message}'
+    mobile_token_ready: 已綁定 Mobile Token
+    mobile_token_empty: 未綁定 Mobile Token
+    switch_failed: '切換失敗：{message}'
   noti_dropdown:
     replys: 覆我
     mentions: 提我

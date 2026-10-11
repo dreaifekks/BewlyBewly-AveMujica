@@ -1,10 +1,17 @@
 // import browser from 'webextension-polyfill'
 import { accessKey } from '~/logic/storage'
 
+import { clearCurrentMobileCredential, getCurrentMobileToken } from './accountManager'
 import { appSign } from './appSign'
 
+export async function syncAccessKey(): Promise<string> {
+  accessKey.value = await getCurrentMobileToken() ?? ''
+  return accessKey.value
+}
+
 export function revokeAccessKey() {
-  accessKey.value = null
+  accessKey.value = ''
+  return clearCurrentMobileCredential()
 }
 
 // https://socialsisteryi.github.io/bilibili-API-collect/docs/misc/sign/APPKey.html#appkey

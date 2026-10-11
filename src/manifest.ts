@@ -38,8 +38,9 @@ export async function getManifest() {
     permissions: [
       'storage',
       'declarativeNetRequest',
+      'cookies',
       ...isFirefox
-        ? ['webRequest', 'webRequestBlocking', 'cookies']
+        ? ['webRequest', 'webRequestBlocking', 'contextualIdentities']
         : [],
     ],
     host_permissions: [

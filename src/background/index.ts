@@ -1,5 +1,6 @@
 import browser from 'webextension-polyfill'
 
+import { setupAccountManager } from './accountManager'
 import { setupApiMsgLstnrs } from './messageListeners/api'
 
 browser.runtime.onInstalled.addListener(async () => {
@@ -40,4 +41,5 @@ if (process.env.FIREFOX) {
 }
 
 // Setup all message listeners
+setupAccountManager()
 setupApiMsgLstnrs()
