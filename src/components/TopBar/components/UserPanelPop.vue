@@ -370,13 +370,16 @@ function handleClickChannel() {
         <span min-w-0 flex-1 text-left>
           <span block font-semibold>{{ $t('topbar.user_dropdown.switch_account') }}</span>
           <span block truncate text="xs $bew-text-3">
-            {{ $t('topbar.user_dropdown.saved_accounts', { count: accounts.length }) }}
+            {{ $t('topbar.user_dropdown.saved_accounts', { count: accounts.length }, accounts.length) }}
           </span>
         </span>
         <span
           v-if="currentAccount"
           class="account-token-badge"
           :class="{ active: currentAccount.hasMobileToken }"
+          :title="currentAccount.hasMobileToken
+            ? $t('topbar.user_dropdown.mobile_token_ready')
+            : $t('topbar.user_dropdown.mobile_token_empty')"
         >
           {{ currentAccount.hasMobileToken ? 'APP' : 'WEB' }}
         </span>
@@ -396,44 +399,45 @@ function handleClickChannel() {
           <div v-else-if="!accounts.length" class="account-list-empty">
             {{ $t('topbar.user_dropdown.no_saved_accounts') }}
           </div>
-          <div
-            v-for="account in accounts"
-            v-else
-            :key="account.uid"
-            class="account-row"
-            :class="{ current: account.current }"
-          >
-            <button
-              type="button"
-              class="account-row-main"
-              :disabled="account.current || Boolean(switchingUid)"
-              @click="handleSwitchAccount(account)"
+          <div v-else class="account-rows">
+            <div
+              v-for="account in accounts"
+              :key="account.uid"
+              class="account-row"
+              :class="{ current: account.current }"
             >
-              <span
-                class="account-avatar"
-                :style="{
-                  backgroundImage: account.avatar
-                    ? `url(${removeHttpFromUrl(account.avatar)})`
-                    : undefined,
-                }"
+              <button
+                type="button"
+                class="account-row-main"
+                :disabled="account.current || Boolean(switchingUid)"
+                @click="handleSwitchAccount(account)"
               >
-                <span v-if="!account.avatar" i-solar:user-circle-bold-duotone />
-              </span>
-              <span min-w-0 flex-1 text-left>
-                <span block truncate font-semibold>{{ account.uname }}</span>
-                <span block truncate text="xs $bew-text-3">UID {{ account.uid }}</span>
-              </span>
-              <span
-                class="account-token-dot"
-                :class="{ active: account.hasMobileToken }"
-                :title="account.hasMobileToken
-                  ? $t('topbar.user_dropdown.mobile_token_ready')
-                  : $t('topbar.user_dropdown.mobile_token_empty')"
-              />
-              <span v-if="switchingUid === account.uid" i-svg-spinners:ring-resize />
-              <span v-else-if="account.current" i-mingcute:check-line text="$bew-theme-color" />
-              <span v-else i-mingcute:right-line text="$bew-text-3" />
-            </button>
+                <span
+                  class="account-avatar"
+                  :style="{
+                    backgroundImage: account.avatar
+                      ? `url(${removeHttpFromUrl(account.avatar)})`
+                      : undefined,
+                  }"
+                >
+                  <span v-if="!account.avatar" i-solar:user-circle-bold-duotone />
+                </span>
+                <span min-w-0 flex-1 text-left>
+                  <span block truncate font-semibold>{{ account.uname }}</span>
+                  <span block truncate text="xs $bew-text-3">UID {{ account.uid }}</span>
+                </span>
+                <span
+                  class="account-token-dot"
+                  :class="{ active: account.hasMobileToken }"
+                  :title="account.hasMobileToken
+                    ? $t('topbar.user_dropdown.mobile_token_ready')
+                    : $t('topbar.user_dropdown.mobile_token_empty')"
+                />
+                <span v-if="switchingUid === account.uid" i-svg-spinners:ring-resize />
+                <span v-else-if="account.current" i-mingcute:check-line text="$bew-theme-color" />
+                <span v-else i-mingcute:right-line text="$bew-text-3" />
+              </button>
+            </div>
           </div>
 
           <button
@@ -546,13 +550,25 @@ function handleClickChannel() {
   border-top: 1px solid var(--bew-border-color);
 }
 
+// 账号多时只让列表自己滚动，避免把面板里原有的入口挤出可视范围
+.account-rows {
+  --uno: "max-h-190px overflow-y-auto";
+  scrollbar-width: thin;
+}
+
 .account-row {
   --uno: "mb-1 last:mb-0 flex items-center gap-1 rounded-$bew-radius";
-  transition: background-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
 
-  &:hover,
-  &.current {
+  &:hover:not(.current) {
     background: var(--bew-fill-2);
+  }
+
+  &.current {
+    background: var(--bew-theme-color-10);
+    box-shadow: inset 0 0 0 1px var(--bew-theme-color-20);
   }
 }
 

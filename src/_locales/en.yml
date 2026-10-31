@@ -414,7 +414,7 @@ topbar:
     my_courses: My courses
     log_out: Log out
     switch_account: Switch account
-    saved_accounts: '{count} saved accounts'
+    saved_accounts: '{count} saved account | {count} saved accounts'
     no_saved_accounts: No saved accounts yet
     add_account: Sign in to another account
     add_account_failed: 'Could not open account sign-in: {message}'
