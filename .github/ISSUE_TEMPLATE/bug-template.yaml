@@ -10,7 +10,7 @@ body:
 
         标题不填或直接随便写类似“bug”“错误”“有问题”简单带过的 issue 直接 close + lock 不解释，如果是旧版本的问题或是已经有人提问过的问题将会关闭。
 
-        功能请求不是在问题报告里面写的，请[开启空 issue](https://github.com/VentusUta/BewlyBewly-AveMujica/issues/new)。
+        功能请求不是在问题报告里面写的，请[开启空 issue](https://github.com/dreaifekks/BewlyBewly-AveMujica/issues/new)。
 
   - type: textarea
     attributes:
@@ -73,7 +73,7 @@ body:
   - type: checkboxes
     attributes:
       label: 作出贡献？
-      description: 【此选项非必选，如果你不晓得这里在说什么，请勿勾选。】我们欢迎任何人贡献代码，见 [CONTRIBUTING.md](https://github.com/VentusUta/BewlyBewly-AveMujica/blob/main/docs/CONTRIBUTING.md)。
+      description: 【此选项非必选，如果你不晓得这里在说什么，请勿勾选。】我们欢迎任何人贡献代码，见 [CONTRIBUTING.md](https://github.com/dreaifekks/BewlyBewly-AveMujica/blob/main/docs/CONTRIBUTING.md)。
       options:
         - label: 我将自行提交一个 PR 来解决此问题。
           required: false

@@ -6,7 +6,7 @@
   "private": true,
   "packageManager": "bun@1.4.2",
   "description": "Just make a few small changes to your bilibili homepage.",
-  "homepage": "https://github.com/VentusUta/BewlyBewly-AveMujica",
+  "homepage": "https://github.com/dreaifekks/BewlyBewly-AveMujica",
   "scripts": {
     "dev": "bun run clear && concurrently \"bun run dev:prepare\" \"bun run dev:web\" \"bun run dev:js\" \"bun run dev:bg\"",
     "dev-firefox": "bun run clear-firefox && cross-env NODE_ENV=development FIREFOX=true concurrently \"bun run dev:prepare\" \"bun run dev:web\" \"bun run dev:js\" \"bun run dev:bg\"",

@@ -2,13 +2,15 @@
 
 English | [官话 - 简体中文](README-cmn_CN.md) | [官話 - 繁體中文](README-cmn_TW.md) | [廣東話](README-jyut.md)
 
+> This is a personal fork of [VentusUta/BewlyBewly-AveMujica](https://github.com/VentusUta/BewlyBewly-AveMujica) that adds multi-account switching with per-account mobile access keys. The store links below install the upstream build, not this fork.
+
 <p align="center" style="margin-bottom: 0px !important;">
-<img width="300" alt="BewlyBewly! Ave Mujica icon" src="https://github.com/VentusUta/BewlyBewly-AveMujica/raw/refs/heads/main/assets/bewly-ave-mujica-style-logo.svg"><br/>
+<img width="300" alt="BewlyBewly! Ave Mujica icon" src="https://github.com/dreaifekks/BewlyBewly-AveMujica/raw/refs/heads/main/assets/bewly-ave-mujica-style-logo.svg"><br/>
 </p>
 
 <p align="center">Just make a few small changes to your bilibili homepage.</p>
 
-<p align="center"><img src="https://img.shields.io/github/v/release/VentusUta/BewlyBewly-AveMujica"> <img src="https://img.shields.io/github/languages/code-size/VentusUta/BewlyBewly-AveMujica"></p>
+<p align="center"><img src="https://img.shields.io/github/v/release/dreaifekks/BewlyBewly-AveMujica"> <img src="https://img.shields.io/github/languages/code-size/dreaifekks/BewlyBewly-AveMujica"></p>
 
 ## Installation
 
@@ -36,7 +38,7 @@ This project uses the [vitesse-webext](https://github.com/antfu/vitesse-webext) 
 
 ## Contribution & Build
 
-See [docs/CONTRIBUTING.md](https://github.com/VentusUta/BewlyBewly-AveMujica/blob/main/docs/CONTRIBUTING.md).
+See [docs/CONTRIBUTING.md](https://github.com/dreaifekks/BewlyBewly-AveMujica/blob/main/docs/CONTRIBUTING.md).
 
 ## Credits
 

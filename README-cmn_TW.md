@@ -2,13 +2,15 @@
 
 [English](README.md) | [官话 - 简体中文](README-cmn_CN.md) | 官話 - 繁體中文 | [廣東話](README-jyut.md)
 
+> 這是 [VentusUta/BewlyBewly-AveMujica](https://github.com/VentusUta/BewlyBewly-AveMujica) 的個人 fork，增加了多帳號切換和按帳號保存的 mobile access key。下方商店連結安裝的是上游版本，不是本 fork。
+
 <p align="center" style="margin-bottom: 0px !important;">
-<img width="300" alt="BewlyBewly! Ave Mujica icon" src="https://github.com/VentusUta/BewlyBewly-AveMujica/raw/refs/heads/main/assets/bewly-ave-mujica-style-logo.svg"><br/>
+<img width="300" alt="BewlyBewly! Ave Mujica icon" src="https://github.com/dreaifekks/BewlyBewly-AveMujica/raw/refs/heads/main/assets/bewly-ave-mujica-style-logo.svg"><br/>
 </p>
 
 <p align="center">對您的 bilibili 頁面進行一些小改動。</p>
 
-<p align="center"><img src="https://img.shields.io/github/v/release/VentusUta/BewlyBewly-AveMujica"> <img src="https://img.shields.io/github/languages/code-size/VentusUta/BewlyBewly-AveMujica"></p>
+<p align="center"><img src="https://img.shields.io/github/v/release/dreaifekks/BewlyBewly-AveMujica"> <img src="https://img.shields.io/github/languages/code-size/dreaifekks/BewlyBewly-AveMujica"></p>
 
 ## 安裝
 
@@ -35,7 +37,7 @@ BewlyBewly! Ave Mujica 是一個針對 bilibili 的瀏覽器擴充功能，旨�
 
 ## 貢獻與建置專案
 
-見 [docs/CONTRIBUTING-cmn_TW.md](https://github.com/VentusUta/BewlyBewly-AveMujica/blob/main/docs/CONTRIBUTING-cmn_TW.md)
+見 [docs/CONTRIBUTING-cmn_TW.md](https://github.com/dreaifekks/BewlyBewly-AveMujica/blob/main/docs/CONTRIBUTING-cmn_TW.md)
 
 ## 鳴謝
 
