@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { MaybeElement } from '@vueuse/core'
 import { onClickOutside, onKeyStroke, useMouseInElement } from '@vueuse/core'
 import type { Ref, UnwrapNestedRefs } from 'vue'
 
@@ -6,11 +7,11 @@ import { useBewlyApp } from '~/composables/useAppProvider'
 import { useDark } from '~/composables/useDark'
 import { useDelayedHover } from '~/composables/useDelayedHover'
 import { useWebFullscreen } from '~/composables/useWebFullscreen'
-import { OVERLAY_SCROLL_BAR_SCROLL, TOP_BAR_VISIBILITY_CHANGE } from '~/constants/globalEvents'
+import { TOP_BAR_VISIBILITY_CHANGE } from '~/constants/globalEvents'
 import { AppPage } from '~/enums/appEnums'
 import { settings } from '~/logic'
 import api from '~/utils/api'
-import { getUserID, isHomePage, isInIframe, removeHttpFromUrl } from '~/utils/main'
+import { getUserID, isHomePage, isInIframe, removeHttpFromUrl, stripBiliLangPrefix } from '~/utils/main'
 import emitter from '~/utils/mitt'
 import { createTransformer } from '~/utils/transformer'
 
@@ -28,17 +29,7 @@ import WatchLaterPop from './components/WatchLaterPop.vue'
 import { updateInterval } from './notify'
 import type { UnReadDm, UnReadMessage, UserInfo } from './types'
 
-// import { useTopBarStore } from '~/stores/topBarStore'
-
-// const popups = { NotificationsPop, MomentsPop, FavoritesPop, HistoryPop }
-
-// const topBarStore = useTopBarStore()
-
-// const topBarItems = computed(() => {
-//   return topBarStore.topBarItems
-// })
-
-const { activatedPage, scrollbarRef, reachTop } = useBewlyApp()
+const { activatedPage, reachTop } = useBewlyApp()
 const { isDark } = useDark()
 
 const mid = getUserID() || ''
@@ -52,10 +43,6 @@ const { isOutside: isOutsideTopBar } = useMouseInElement(headerTarget)
 // button even after login. if the user is not logged in, the login button will show up later
 const isLogin = ref<boolean>(true)
 
-const logo = ref<HTMLElement>() as Ref<HTMLElement>
-const avatarImg = ref<HTMLImageElement>() as Ref<HTMLImageElement>
-const avatarShadow = ref<HTMLImageElement>() as Ref<HTMLImageElement>
-
 const scrollTop = ref<number>(0)
 const oldScrollTop = ref<number>(0)
 
@@ -64,7 +51,7 @@ const drawerVisible = reactive({
 })
 
 const isSearchPage = computed((): boolean => {
-  if (/https?:\/\/search.bilibili.com\/.*$/.test(location.href))
+  if (/https?:\/\/search.bilibili.com\/.*$/.test(stripBiliLangPrefix()))
     return true
   return false
 })
@@ -78,14 +65,14 @@ const forceWhiteIcon = computed((): boolean => {
     // 分區頁面由於上面有背景，所以強制 icon 變白色用於區分背景
     // channel, anime, chinese anime, tv shows, movie, variety shows, mooc but not including video page
     || (
-      /https?:\/\/(?:www.)?bilibili.com\/(?:v|anime|guochuang|tv|movie|variety|mooc).*/.test(location.href)
-      && !/https?:\/\/(?:www.)?bilibili.com\/video.*/.test(location.href)
+      /https?:\/\/(?:www.)?bilibili.com\/(?:v|anime|guochuang|tv|movie|variety|mooc).*/.test(stripBiliLangPrefix())
+      && !/https?:\/\/(?:www.)?bilibili.com\/video.*/.test(stripBiliLangPrefix())
     )
     // user space page 空間頁
-    || /https?:\/\/space.bilibili\.com\.*/.test(location.href)
+    || /https?:\/\/space.bilibili\.com\.*/.test(stripBiliLangPrefix())
     // premium page bilibili 大會員頁
-    || /https?:\/\/account\.bilibili\.com\/big.*$/.test(location.href)
-    || /https?:\/\/(?:www\.)?bilibili\.com\/c\/(?!popular).*/.test(location.href)
+    || /https?:\/\/account\.bilibili\.com\/big.*$/.test(stripBiliLangPrefix())
+    || /https?:\/\/(?:www\.)?bilibili\.com\/c\/(?!popular).*/.test(stripBiliLangPrefix())
   ) {
     return true
   }
@@ -136,17 +123,17 @@ const isTopBarFixed = computed((): boolean => {
   if (
     isHomePage()
     // video page
-    || /https?:\/\/(?:www.)?bilibili.com\/(?:video|list)\/.*/.test(location.href)
+    || /https?:\/\/(?:www.)?bilibili.com\/(?:video|list)\/.*/.test(stripBiliLangPrefix())
     // anime playback & movie page
-    || /https?:\/\/(?:www.)?bilibili.com\/bangumi\/play\/.*/.test(location.href)
+    || /https?:\/\/(?:www.)?bilibili.com\/bangumi\/play\/.*/.test(stripBiliLangPrefix())
     // moment page
-    || /https?:\/\/t.bilibili.com.*/.test(location.href)
+    || /https?:\/\/t.bilibili.com.*/.test(stripBiliLangPrefix())
     // channel, anime, chinese anime, tv shows, movie, variety shows, mooc
-    || /https?:\/\/(?:www.)?bilibili.com\/(?:v|anime|guochuang|tv|movie|variety|mooc).*/.test(location.href)
+    || /https?:\/\/(?:www.)?bilibili.com\/(?:v|anime|guochuang|tv|movie|variety|mooc).*/.test(stripBiliLangPrefix())
     // articles page
-    || /https?:\/\/(?:www.)?bilibili.com\/read\/home.*/.test(location.href)
+    || /https?:\/\/(?:www.)?bilibili.com\/read\/home.*/.test(stripBiliLangPrefix())
     // premium page bilibili 大會員頁
-    || /https?:\/\/account\.bilibili\.com\/big.*$/.test(location.href)
+    || /https?:\/\/account\.bilibili\.com\/big.*$/.test(stripBiliLangPrefix())
   ) {
     return true
   }
@@ -156,9 +143,9 @@ const isTopBarFixed = computed((): boolean => {
 const showTopBar = computed((): boolean => {
   if (
     // Creative center page
-    /https?:\/\/member.bilibili.com\/platform.*/.test(location.href)
+    /https?:\/\/member.bilibili.com\/platform.*/.test(stripBiliLangPrefix())
     // https://github.com/BewlyBewly/BewlyBewly/issues/1276
-    || /https?:\/\/(?:www\.)?bilibili\.com\/read\/(?:preview|pcpreview).*/.test(location.href)
+    || /https?:\/\/(?:www\.)?bilibili\.com\/read\/(?:preview|pcpreview).*/.test(stripBiliLangPrefix())
   ) {
     return false
   }
@@ -206,7 +193,7 @@ const upload = setupTopBarItemHoverEvent('upload')
 // More
 const more = setupTopBarItemHoverEvent('more')
 
-const topBarItemElements: Record<keyof typeof popupVisible, Ref<HTMLElement | undefined>> = {
+const topBarItemElements: Record<keyof typeof popupVisible, Ref<HTMLElement | null | undefined>> = {
   channels,
   userPanel: avatar,
   notifications,
@@ -218,25 +205,26 @@ const topBarItemElements: Record<keyof typeof popupVisible, Ref<HTMLElement | un
   more,
 }
 
-const avatarTransformer = setupTopBarItemTransformer('userPanel')
-const notificationsTransformer = setupTopBarItemTransformer('notifications')
-const momentsTransformer = setupTopBarItemTransformer('moments')
-const favoritesTransformer = setupTopBarItemTransformer('favorites')
-const historyTransformer = setupTopBarItemTransformer('history')
-const watchLaterTransformer = setupTopBarItemTransformer('watchLater')
-const uploadTransformer = setupTopBarItemTransformer('upload')
-const moreTransformer = setupTopBarItemTransformer('more')
+const momentsPop = useTemplateRef('momentsTransformer')
+const favoritesPop = useTemplateRef('favoritesTransformer')
 
-function setupTopBarItemTransformer(key: keyof typeof popupVisible) {
-  const transformer = createTransformer(topBarItemElements[key], {
+setupTopBarItemTransformer('userPanel', useTemplateRef('avatarTransformer'))
+setupTopBarItemTransformer('notifications', useTemplateRef('notificationsTransformer'))
+setupTopBarItemTransformer('moments', momentsPop)
+setupTopBarItemTransformer('favorites', favoritesPop)
+setupTopBarItemTransformer('history', useTemplateRef('historyTransformer'))
+setupTopBarItemTransformer('watchLater', useTemplateRef('watchLaterTransformer'))
+setupTopBarItemTransformer('upload', useTemplateRef('uploadTransformer'))
+setupTopBarItemTransformer('more', useTemplateRef('moreTransformer'))
+
+function setupTopBarItemTransformer(key: keyof typeof popupVisible, target: Ref<MaybeElement>) {
+  createTransformer(topBarItemElements[key], {
     x: '0px',
     y: '50px',
     centerTarget: {
       x: true,
     },
-  })
-
-  return transformer
+  }, target)
 }
 
 function setupTopBarItemHoverEvent(key: keyof typeof popupVisible) {
@@ -283,7 +271,7 @@ watch(
   (newVal, oldVal) => {
     // Stop loading new message counts on the message page, because it resets to 0 when the
     // users reads the messages on this page
-    if (oldVal === undefined && /https?:\/\/message.bilibili.com.*$/.test(location.href))
+    if (oldVal === undefined && /https?:\/\/message.bilibili.com.*$/.test(stripBiliLangPrefix()))
       return
 
     if (newVal === oldVal)
@@ -301,7 +289,9 @@ watch(
     if (newVal === oldVal)
       return
 
-    if (!newVal)
+    if (newVal)
+      refreshMomentsPopIfNeeded()
+    else
       await getTopBarNewMomentsCount()
   },
   { immediate: true },
@@ -312,9 +302,7 @@ watch(() => popupVisible.favorites, (newVal, oldVal) => {
     return
   if (newVal) {
     nextTick(() => {
-      if (favoritesTransformer.value)
-      // @ts-expect-error allow
-        favoritesTransformer.value.refreshFavoriteResources()
+      favoritesPop.value?.refreshFavoriteResources()
     })
   }
 })
@@ -327,21 +315,12 @@ onMounted(() => {
   initData()
   nextTick(() => {
     toggleTopBarVisible(true)
-    emitter.off(OVERLAY_SCROLL_BAR_SCROLL)
-    if (isHomePage() && !settings.value.useOriginalBilibiliHomepage) {
-      emitter.on(OVERLAY_SCROLL_BAR_SCROLL, () => {
-        handleScroll()
-      })
-    }
-    else {
-      window.addEventListener('scroll', handleScroll)
-    }
+    window.addEventListener('scroll', handleScroll)
   })
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
-  emitter.off(OVERLAY_SCROLL_BAR_SCROLL)
 })
 
 // Hide the top bar when entering web fullscreen (网页全屏). See useWebFullscreen for details.
@@ -359,13 +338,7 @@ async function initData() {
 }
 
 function handleScroll() {
-  if (isHomePage() && !settings.value.useOriginalBilibiliHomepage) {
-    const osInstance = scrollbarRef.value?.osInstance()
-    scrollTop.value = osInstance.elements().viewport.scrollTop as number
-  }
-  else {
-    scrollTop.value = document.documentElement.scrollTop
-  }
+  scrollTop.value = document.documentElement.scrollTop
 
   if (scrollTop.value === 0)
     toggleTopBarVisible(true)
@@ -453,6 +426,10 @@ function handleNotificationsItemClick(item: { name: string, url: string, unreadC
 // #region Moments
 const newMomentsCount = ref<number>(0)
 
+function refreshMomentsPopIfNeeded() {
+  momentsPop.value?.refreshMomentsIfNeeded(newMomentsCount.value > 0)
+}
+
 async function getTopBarNewMomentsCount() {
   if (!isLogin.value)
     return
@@ -462,8 +439,8 @@ async function getTopBarNewMomentsCount() {
   try {
     const res = await api.moment.getTopBarNewMomentsCount()
     if (res.code === 0) {
-      if (typeof res.data.update_info.item.count === 'number')
-        result = res.data.update_info.item.count
+      if (typeof res.data.update_num === 'number')
+        result = res.data.update_num
     }
   }
   finally {
@@ -543,7 +520,7 @@ defineExpose({
             z-1 relative w-fit
           >
             <a
-              ref="logo" href="//www.bilibili.com"
+              href="//www.bilibili.com"
               target="_top"
               class="group logo"
               :class="{
@@ -622,22 +599,6 @@ defineExpose({
               </a>
             </div>
             <template v-if="isLogin">
-              <!-- TODO: need to refactor to this -->
-              <!-- <div display="lg:flex none">
-              <div v-for="item in topBarItems" :key="item.i18nKey" class="right-side-item">
-                <a :href="item.url" target="_blank" :title="$t(item.i18nKey)">
-                  <Icon :icon="item.icon" />
-                </a>
-
-                <Component
-                  :is="popups[item.popup] ?? 'div'"
-                  v-if="item.popup"
-                  class="bew-popover"
-                />
-              </div>
-            </div> -->
-
-              <!-- TODO: need to refactor to above code -->
               <div class="hidden lg:flex" gap-1>
                 <!-- Moments -->
                 <div
@@ -885,7 +846,6 @@ defineExpose({
               @click="event => handleClickTopBarItem(event, 'userPanel')"
             >
               <ALink
-                ref="avatarImg"
                 :href="`https://space.bilibili.com/${mid}`"
                 type="topBar"
                 class="avatar-img"
@@ -895,7 +855,6 @@ defineExpose({
                 }"
               />
               <div
-                ref="avatarShadow"
                 class="avatar-shadow"
                 :class="{ hover: popupVisible.userPanel }"
                 :style="{
@@ -997,6 +956,9 @@ defineExpose({
   --uno: "after:opacity-100 after:w-full after:h-100px";
   --uno: "after:absolute after:top--30px after:left-1/2 after:-z-1";
   --uno: "after:transform after:-translate-x-1/2";
+
+  // 只设在弹窗根上：设在后代上会拦住缩略图等 overflow: hidden 元素上的滚轮，列表本身就滚不动了
+  overscroll-behavior: contain;
 }
 
 .logo.activated {

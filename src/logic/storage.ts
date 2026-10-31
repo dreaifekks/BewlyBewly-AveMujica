@@ -2,6 +2,7 @@ import { useStorageLocal } from '~/composables/useStorageLocal'
 import type { wallpaperItem } from '~/constants/imgs'
 import type { HomeSubPage } from '~/contentScripts/views/Home/types'
 import type { AppPage } from '~/enums/appEnums'
+import type { BiliTranslationSetting } from '~/utils/biliTranslation'
 
 export const storageDemo = useStorageLocal('webext-demo', 'Storage Demo')
 export const accessKey = ref('')
@@ -12,6 +13,7 @@ export interface Settings {
   enableHorizontalScrolling: boolean
 
   language: string
+  biliTranslation: BiliTranslationSetting
   customizeFont: 'default' | 'recommend' | 'recommend-new' | 'custom'
   fontFamily: string
   danmakuFont: 'default' | 'override' | 'custom'
@@ -106,6 +108,7 @@ export interface Settings {
   filterByUser: { keyword: string, remark: string }[]
 
   followingTabShowLivestreamingVideos: boolean
+  followingTabFilterByDuration: boolean
 
   homePageTabVisibilityList: { page: HomeSubPage, visible: boolean }[]
   alwaysShowTabsOnHomePage: boolean
@@ -122,6 +125,7 @@ export interface Settings {
   blockVIPDanmukuStyle: boolean
   cleanUrlArgument: boolean
   bvToAv: boolean
+  showCommentIpLocation: boolean
   legacyPlayerLoadingScreen: boolean
 }
 
@@ -131,6 +135,7 @@ export const originalSettings: Settings = {
   enableHorizontalScrolling: false,
 
   language: '',
+  biliTranslation: 'original',
   customizeFont: 'recommend-new',
   fontFamily: '',
   danmakuFont: 'override',
@@ -224,6 +229,7 @@ export const originalSettings: Settings = {
   filterByUser: [],
 
   followingTabShowLivestreamingVideos: true,
+  followingTabFilterByDuration: false,
 
   homePageTabVisibilityList: [],
   alwaysShowTabsOnHomePage: false,
@@ -241,6 +247,7 @@ export const originalSettings: Settings = {
   blockVIPDanmukuStyle: true,
   cleanUrlArgument: true,
   bvToAv: false,
+  showCommentIpLocation: true,
   legacyPlayerLoadingScreen: false,
 }
 

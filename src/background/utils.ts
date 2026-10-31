@@ -5,6 +5,7 @@
 import type Browser from 'webextension-polyfill'
 
 type FetchAfterHandler = ((data: Response) => Promise<any>) | ((data: any) => any)
+type SendResponse = (response: unknown) => void
 
 function toJsonHandler(data: Response): Promise<any> {
   return data.json()
@@ -15,8 +16,11 @@ function toData(data: Promise<any>): Promise<any> {
 
 // if need sendResponse, use this
 // return a FetchAfterHandler function
-function sendResponseHandler(sendResponse: Function) {
-  return (data: any) => sendResponse(data)
+function sendResponseHandler(sendResponse: SendResponse) {
+  return (data: any) => {
+    sendResponse(data)
+    return data
+  }
 }
 
 // 定义后处理流
@@ -33,6 +37,11 @@ const AHS: {
 interface Message {
   contentScriptQuery: string
   [key: string]: any
+}
+
+function isMessage(message: unknown): message is Message {
+  return typeof message === 'object' && message !== null
+    && 'contentScriptQuery' in message && typeof message.contentScriptQuery === 'string'
 }
 
 interface _FETCH {
@@ -52,21 +61,26 @@ interface API {
   afterHandle: ((response: Response) => Response | Promise<Response>)[]
 }
 // 重载API 可以为函数
-type APIFunction = (message: Message, sender?: any, sendResponse?: Function) => any
+type APIFunction = (message: Message, sender?: any, sendResponse?: SendResponse) => any
 export type APIType = API | APIFunction
 interface APIMAP {
   [key: string]: APIType
 }
 // 工厂函数API_LISTENER_FACTORY
 function apiListenerFactory(API_MAP: APIMAP) {
-  return (message: Message, sender?: Browser.Runtime.MessageSender, sendResponse?: Function) => {
+  // Not async: other runtime listeners (account manager) share this channel, and an async
+  // listener would answer every message with Promise<undefined> and steal their responses.
+  return (message: unknown, sender?: Browser.Runtime.MessageSender, sendResponse?: SendResponse) => {
+    // Messages without `contentScriptQuery` belong to other listeners
+    if (!isMessage(message))
+      return
     const contentScriptQuery = message.contentScriptQuery
     // 检测是否有contentScriptQuery
     if (!contentScriptQuery)
       return
     if (!API_MAP[contentScriptQuery])
       return console.error(`Cannot find this contentScriptQuery: ${contentScriptQuery}`)
-    if (API_MAP[contentScriptQuery] instanceof Function)
+    if (typeof API_MAP[contentScriptQuery] === 'function')
       return (API_MAP[contentScriptQuery] as APIFunction)(message, sender, sendResponse)
 
     const api = API_MAP[contentScriptQuery] as API
@@ -74,55 +88,61 @@ function apiListenerFactory(API_MAP: APIMAP) {
     // eslint-disable-next-line node/prefer-global/process
     if (process.env.FIREFOX && sender && sender.tab && sender.tab.cookieStoreId) {
       return browser.cookies.getAll({ storeId: sender.tab.cookieStoreId })
-        .then(cookies => doRequest(message, api, sendResponse, cookies))
+        .then((cookies: Browser.Cookies.Cookie[]) => doRequest(message, api, sendResponse, cookies))
     }
 
     return doRequest(message, api, sendResponse)
   }
 }
 
-function doRequest(message: Message, api: API, sendResponse?: Function, cookies?: Browser.Cookies.Cookie[]) {
+function buildRequest(message: Message, api: API) {
+  let { contentScriptQuery, ...rest } = message
+  // rest above two part body or params
+  rest = rest || {}
+
+  let { _fetch, url, params = {} } = api
+  const { method, headers = {}, body } = _fetch as _FETCH
+  const isGET = method.toLocaleLowerCase() === 'get'
+  // merge params and body
+  const targetParams = Object.assign({}, params)
+  let targetBody = Object.assign({}, body)
+  Object.keys(rest).forEach((key) => {
+    if (body && body[key] !== undefined)
+      targetBody[key] = rest[key]
+    else
+      targetParams[key] = rest[key]
+  })
+
+  // generate params
+  if (Object.keys(targetParams).length) {
+    const urlParams = new URLSearchParams()
+    for (const key in targetParams)
+      targetParams[key] && urlParams.append(key, targetParams[key])
+    url += `?${urlParams.toString()}`
+  }
+  // generate body
+  if (!isGET) {
+    targetBody = (headers && headers['Content-Type'] && headers['Content-Type'].includes('application/x-www-form-urlencoded'))
+      ? new URLSearchParams(targetBody)
+      : JSON.stringify(targetBody)
+  }
+  // get cant take body
+  const fetchOpt = { method, headers }
+  !isGET && Object.assign(fetchOpt, { body: targetBody })
+  return { url, fetchOpt }
+}
+
+function doRequest(message: Message, api: API, sendResponse?: SendResponse, cookies?: Browser.Cookies.Cookie[]) {
   try {
-    let { contentScriptQuery, ...rest } = message
-    // rest above two part body or params
-    rest = rest || {}
-
-    let { _fetch, url, params = {}, afterHandle } = api
-    const { method, headers = {}, body } = _fetch as _FETCH
-    const isGET = method.toLocaleLowerCase() === 'get'
-    // merge params and body
-    const targetParams = Object.assign({}, params)
-    let targetBody = Object.assign({}, body)
-    Object.keys(rest).forEach((key) => {
-      if (body && body[key] !== undefined)
-        targetBody[key] = rest[key]
-      else
-        targetParams[key] = rest[key]
-    })
-
-    // generate params
-    if (Object.keys(targetParams).length) {
-      const urlParams = new URLSearchParams()
-      for (const key in targetParams)
-        targetParams[key] && urlParams.append(key, targetParams[key])
-      url += `?${urlParams.toString()}`
-    }
-    // generate body
-    if (!isGET) {
-      targetBody = (headers && headers['Content-Type'] && headers['Content-Type'].includes('application/x-www-form-urlencoded'))
-        ? new URLSearchParams(targetBody)
-        : JSON.stringify(targetBody)
-    }
+    const { afterHandle } = api
+    const { url, fetchOpt } = buildRequest(message, api)
     // generate cookies
     if (cookies) {
       const cookieStr = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ')
-      headers['firefox-multi-account-cookie'] = cookieStr
+      fetchOpt.headers['firefox-multi-account-cookie'] = cookieStr
     }
-    // get cant take body
-    const fetchOpt = { method, headers }
-    !isGET && Object.assign(fetchOpt, { body: targetBody })
     // fetch and after handle
-    let baseFunc = fetch(url, {
+    let baseFunc: Promise<any> = fetch(url, {
       ...fetchOpt,
     })
     afterHandle.forEach((func) => {
@@ -146,6 +166,7 @@ export {
   type API,
   apiListenerFactory,
   type APIMAP,
+  buildRequest,
   type FetchAfterHandler,
   type Message,
   sendResponseHandler,

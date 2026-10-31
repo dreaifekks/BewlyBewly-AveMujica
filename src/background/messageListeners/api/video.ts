@@ -14,6 +14,7 @@ const API_VIDEO = {
       homepage_ver: 1, // 首页版本
       ps: 12, // 单页记录数，默认12，最大30（调用时可覆盖）
       fresh_idx: 1, // 翻页号，从1开始（调用时会动态传入）
+      'x-bili-locale-json': '', // 请求官方译文时传入
     },
     afterHandle: AHS.J_D,
   },
@@ -74,6 +75,60 @@ const API_VIDEO = {
     },
     afterHandle: AHS.J_D,
   },
+  dislikeWebVideo: {
+    url: 'https://api.bilibili.com/x/web-interface/feedback/dislike',
+    _fetch: {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      },
+      body: {
+        app_id: 100,
+        platform: 5,
+        from_spmid: '',
+        spmid: '333.1007.0.0',
+        goto: '',
+        id: 0,
+        mid: 0,
+        track_id: '',
+        feedback_page: 1,
+        reason_id: 1,
+        csrf: '',
+      },
+    },
+    params: {
+      wts: '',
+      w_rid: '',
+    },
+    afterHandle: AHS.J_D,
+  },
+  undoDislikeWebVideo: {
+    url: 'https://api.bilibili.com/x/web-interface/feedback/dislike/cancel',
+    _fetch: {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      },
+      body: {
+        app_id: 100,
+        platform: 5,
+        from_spmid: '',
+        spmid: '333.1007.0.0',
+        goto: '',
+        id: 0,
+        mid: 0,
+        track_id: '',
+        feedback_page: 1,
+        reason_id: 1,
+        csrf: '',
+      },
+    },
+    params: {
+      wts: '',
+      w_rid: '',
+    },
+    afterHandle: AHS.J_D,
+  },
   // https://socialsisteryi.github.io/bilibili-API-collect/docs/video/info.html#%E8%8E%B7%E5%8F%96%E8%A7%86%E9%A2%91%E8%AF%A6%E7%BB%86%E4%BF%A1%E6%81%AF-web%E7%AB%AF
   getVideoInfo: {
     url: 'https://api.bilibili.com/x/web-interface/view',
@@ -83,6 +138,19 @@ const API_VIDEO = {
     params: {
       aid: '',
       bvid: '',
+    },
+    afterHandle: AHS.J_D,
+  },
+  getVideoInfoWbi: {
+    url: 'https://api.bilibili.com/x/web-interface/wbi/view',
+    _fetch: {
+      method: 'get',
+    },
+    params: {
+      'bvid': '',
+      'x-bili-locale-json': '',
+      'wts': '',
+      'w_rid': '',
     },
     afterHandle: AHS.J_D,
   },
@@ -112,6 +180,7 @@ const API_VIDEO = {
     params: {
       pn: 1,
       ps: 20,
+      'x-bili-locale-json': '',
     },
     afterHandle: AHS.J_D,
   },

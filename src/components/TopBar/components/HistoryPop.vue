@@ -260,7 +260,7 @@ function deleteHistoryItem(index: number, historyItem: HistoryItem) {
           hover:bg="$bew-fill-2"
           duration-300
         >
-          <section flex="~ gap-4 item-start">
+          <section flex="~ gap-4 items-start">
             <!-- Video cover, live cover, ariticle cover -->
             <div
               bg="$bew-skeleton"
@@ -294,7 +294,7 @@ function deleteHistoryItem(index: number, historyItem: HistoryItem) {
                     :src="`${removeHttpFromUrl(
                       historyItem.cover,
                     )}@256w_144h_1c`"
-                    :alt="historyItem.title"
+                    alt=""
                     object-cover
                   >
                   <div
@@ -332,7 +332,7 @@ function deleteHistoryItem(index: number, historyItem: HistoryItem) {
                     :src="`${removeHttpFromUrl(
                       historyItem.cover,
                     )}@256w_144h_1c`"
-                    :alt="historyItem.title"
+                    alt=""
                     bg="contain"
                   >
                   <div
@@ -373,14 +373,14 @@ function deleteHistoryItem(index: number, historyItem: HistoryItem) {
                       : ''
                   }@256w_144h_1c`"
                   object-cover
-                  :alt="historyItem.title"
+                  alt=""
                   bg="contain"
                 >
               </div>
             </div>
 
             <!-- Description -->
-            <div>
+            <div min-w-0>
               <h3
                 class="keep-two-lines"
                 overflow="hidden"
@@ -392,7 +392,9 @@ function deleteHistoryItem(index: number, historyItem: HistoryItem) {
               <div text="$bew-text-2 sm" m="t-4" flex="~" align="items-center">
                 <ALink
                   :href="`https://space.bilibili.com/${historyItem.author_mid}`"
+                  :title="historyItem.author_name"
                   type="topBar"
+                  truncate
                 >
                   {{ historyItem.author_name }}
                 </ALink>

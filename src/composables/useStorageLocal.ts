@@ -1,9 +1,9 @@
-import type { MaybeRef, RemovableRef } from '@vueuse/core'
+import type { RemovableRef } from '@vueuse/core'
 import { StorageSerializers } from '@vueuse/core'
-import type { Ref } from 'vue'
+import type { MaybeRef, Ref } from 'vue'
 import { nextTick, ref, toValue, watch } from 'vue'
 import type { Storage } from 'webextension-polyfill'
-import { storage } from 'webextension-polyfill'
+import browser from 'webextension-polyfill'
 
 import { isExtensionContextValid } from '~/utils/extensionContext'
 
@@ -14,6 +14,11 @@ interface UseStorageLocalOptions {
   writeDefaults?: boolean
   /** Deep watch the value for changes. Defaults to `true`. */
   deep?: boolean
+}
+
+export type StorageLocalRef<T> = RemovableRef<T> & {
+  /** Resolves once the stored value has been read and applied (or the read has failed). */
+  ready: Promise<void>
 }
 
 type SerializerType = keyof typeof StorageSerializers
@@ -45,7 +50,7 @@ export function useStorageLocal<T>(
   key: string,
   initialValue: MaybeRef<T>,
   options: UseStorageLocalOptions = {},
-): RemovableRef<T> {
+): StorageLocalRef<T> {
   const { mergeDefaults = false, writeDefaults = true, deep = true } = options
 
   const rawInit = toValue(initialValue) as T
@@ -73,14 +78,14 @@ export function useStorageLocal<T>(
 
   async function read() {
     try {
-      const rawValue = (await storage.local.get(key))[key] as string | undefined
+      const rawValue = (await browser.storage.local.get(key))[key] as string | undefined
 
       if (rawValue == null) {
         applyValue(rawInit, undefined)
         if (writeDefaults && rawInit != null) {
           const written = serializer.write(rawInit)
           lastRawValue = written
-          await storage.local.set({ [key]: written })
+          await browser.storage.local.set({ [key]: written })
         }
       }
       else {
@@ -119,9 +124,9 @@ export function useStorageLocal<T>(
     }).catch(console.error)
   }
 
-  storage.onChanged.addListener(onStorageChanged)
+  browser.storage.onChanged.addListener(onStorageChanged)
 
-  read().finally(() => {
+  const ready = read().finally(() => {
     const stopWatcher = watch(
       data,
       async (value) => {
@@ -138,12 +143,12 @@ export function useStorageLocal<T>(
         try {
           if (value == null) {
             lastRawValue = undefined
-            await storage.local.remove(key)
+            await browser.storage.local.remove(key)
           }
           else {
             const written = serializer.write(value)
             lastRawValue = written
-            await storage.local.set({ [key]: written })
+            await browser.storage.local.set({ [key]: written })
           }
         }
         catch (e) {
@@ -155,5 +160,5 @@ export function useStorageLocal<T>(
     )
   })
 
-  return data as RemovableRef<T>
+  return Object.assign(data, { ready }) as StorageLocalRef<T>
 }

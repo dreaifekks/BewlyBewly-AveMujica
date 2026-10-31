@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 import { useI18n } from 'vue-i18n'
+import { useToast } from 'vue-toastification'
 
 import Empty from '~/components/Empty.vue'
 import Loading from '~/components/Loading.vue'
@@ -25,6 +26,7 @@ interface MomentCard {
 }
 
 const { t } = useI18n()
+const toast = useToast()
 
 const moments = reactive<MomentCard[]>([])
 const addedWatchLaterList = reactive<number[]>([])
@@ -50,16 +52,6 @@ const momentUpdateBaseline = ref<string>('')
 const momentOffset = ref<string>('')
 const newMomentsCount = ref<number>(0)
 
-watch(() => selectedMomentTab.value.type, (newVal, oldVal) => {
-  if (newVal === oldVal)
-    return
-
-  if (momentsWrap.value)
-    scrollToTop(momentsWrap.value)
-
-  initData()
-}, { immediate: true })
-
 onMounted(() => {
   if (momentsWrap.value) {
     momentsWrap.value.addEventListener('scroll', () => {
@@ -84,7 +76,19 @@ function onClickTab(tab: MomentTab) {
   initData()
 }
 
+// Load on open rather than on mount: requesting feed/nav marks moments as read and clears the badge
+function refreshMomentsIfNeeded(hasNewMoments: boolean) {
+  if (isLoading.value)
+    return
+
+  if (moments.length === 0 || (hasNewMoments && selectedMomentTab.value.type === 'video'))
+    initData()
+}
+
 async function initData() {
+  if (momentsWrap.value)
+    scrollToTop(momentsWrap.value)
+
   moments.length = 0
   momentUpdateBaseline.value = ''
   momentOffset.value = ''
@@ -249,7 +253,10 @@ function toggleWatchLater(aid: number) {
       .then((res) => {
         if (res.code === 0)
           addedWatchLaterList.push(aid)
+        else
+          toast.error(res.message)
       })
+      .catch(handleWatchLaterError)
   }
   else {
     api.watchlater.removeFromWatchLater({
@@ -261,12 +268,22 @@ function toggleWatchLater(aid: number) {
           addedWatchLaterList.length = 0
           Object.assign(addedWatchLaterList, addedWatchLaterList.filter(item => item !== aid))
         }
+        else {
+          toast.error(res.message)
+        }
       })
+      .catch(handleWatchLaterError)
   }
+}
+
+function handleWatchLaterError(error: unknown) {
+  console.error(error)
+  toast.error(t('common.operation_failed'))
 }
 
 defineExpose({
   checkIfHasNewMomentsThenUpdateMoments,
+  refreshMomentsIfNeeded,
 })
 </script>
 

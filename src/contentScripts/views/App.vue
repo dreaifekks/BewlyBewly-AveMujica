@@ -6,13 +6,13 @@ import { useToast } from 'vue-toastification'
 import type { BewlyAppProvider } from '~/composables/useAppProvider'
 import { useDark } from '~/composables/useDark'
 import { useWebFullscreen } from '~/composables/useWebFullscreen'
-import { BEWLY_API_TOAST, BEWLY_MOUNTED, DRAWER_VIDEO_ENTER_PAGE_FULL, DRAWER_VIDEO_EXIT_PAGE_FULL, IFRAME_PAGE_SWITCH_BEWLY, IFRAME_PAGE_SWITCH_BILI, OVERLAY_SCROLL_BAR_SCROLL } from '~/constants/globalEvents'
+import { BEWLY_API_TOAST, BEWLY_MOUNTED, DRAWER_VIDEO_ENTER_PAGE_FULL, DRAWER_VIDEO_EXIT_PAGE_FULL, IFRAME_PAGE_SWITCH_BEWLY, IFRAME_PAGE_SWITCH_BILI } from '~/constants/globalEvents'
 import { AppPage } from '~/enums/appEnums'
 import { settings } from '~/logic'
-import { type DockItem, useMainStore } from '~/stores/mainStore'
+import type { DockItem } from '~/stores/mainStore'
+import { useMainStore } from '~/stores/mainStore'
 import { useSettingsStore } from '~/stores/settingsStore'
 import { isHomePage, isInIframe, isNotificationPage, isVideoOrBangumiPage, openLinkToNewTab, queryDomUntilFound, scrollToTop } from '~/utils/main'
-import emitter from '~/utils/mitt'
 import { initUrlCleaner } from '~/utils/urlCleaner'
 
 import { setupNecessarySettingsWatchers } from './necessarySettingsWatchers'
@@ -59,17 +59,14 @@ const pages = {
   [AppPage.Moments]: defineAsyncComponent(() => import('./Moments/Moments.vue')),
 }
 const mainAppRef = ref<HTMLElement>() as Ref<HTMLElement>
-const scrollbarRef = ref()
 const handlePageRefresh = ref<() => void>()
-const handleReachBottom = ref<() => void>()
 const handleUndoRefresh = ref<() => void>()
 const handleForwardRefresh = ref<() => void>()
 const showUndoButton = ref<boolean>(false)
-const handleThrottledPageRefresh = useThrottleFn(() => handlePageRefresh.value?.(), 500)
-const handleThrottledReachBottom = useThrottleFn(() => handleReachBottom.value?.(), 500)
-const handleThrottledBackToTop = useThrottleFn(() => handleBackToTop(), 1000)
-const handleThrottledPageUnRefresh = useThrottleFn(() => handleUndoRefresh.value?.(), 500)
-const handleThrottledPageForwardRefresh = useThrottleFn(() => handleForwardRefresh.value?.(), 500)
+const handleThrottledPageRefresh = useThrottleFn(() => handlePageRefresh.value?.(), 500, false)
+const handleThrottledBackToTop = useThrottleFn(() => handleBackToTop(), 1000, false)
+const handleThrottledPageUnRefresh = useThrottleFn(() => handleUndoRefresh.value?.(), 500, false)
+const handleThrottledPageForwardRefresh = useThrottleFn(() => handleForwardRefresh.value?.(), 500, false)
 const topBarRef = ref()
 const reachTop = ref<boolean>(true)
 
@@ -211,10 +208,8 @@ watch(
       window.history.replaceState({}, '', url.toString())
     }
 
-    if (scrollbarRef.value) {
-      const osInstance = scrollbarRef.value.osInstance()
-      osInstance.elements().viewport.scrollTop = 0
-    }
+    if (!isFirstTimeActivatedPageChange.value && showBewlyPage.value)
+      window.scrollTo(0, 0)
     isFirstTimeActivatedPageChange.value = false
   },
   { immediate: true },
@@ -274,10 +269,8 @@ function handleDockItemClick(dockItem: DockItem) {
     }
     else {
       if (isHomePage()) {
-        // Replace NextTick with setTimeout(200), otherwise osInstance in function 'changeActivatePage' will be undefined
-        setTimeout(() => {
-          changeActivatePage(dockItem.page)
-        }, 200)
+        if (activatedPage.value === dockItem.page)
+          handleActivatedPageClick()
       }
       else {
         location.href = `https://www.bilibili.com/?page=${dockItem.page}`
@@ -289,51 +282,23 @@ function handleDockItemClick(dockItem: DockItem) {
   }
 }
 
-function changeActivatePage(pageName: AppPage) {
-  const osInstance = scrollbarRef.value?.osInstance()
-  const scrollTop: number = osInstance.elements().viewport.scrollTop
-
-  if (activatedPage.value === pageName) {
-    if (activatedPage.value !== AppPage.Search) {
-      if (scrollTop === 0)
-        handleThrottledPageRefresh()
-      else
-        handleThrottledBackToTop()
-    }
+function handleActivatedPageClick() {
+  if (activatedPage.value === AppPage.Search)
     return
-  }
-  activatedPage.value = pageName
+
+  if (window.scrollY === 0)
+    handleThrottledPageRefresh()
+  else
+    handleThrottledBackToTop()
 }
 
 function handleBackToTop(targetScrollTop = 0 as number) {
-  const osInstance = scrollbarRef.value?.osInstance()
-  if (osInstance) {
-    scrollToTop(osInstance.elements().viewport, targetScrollTop)
+  if (showBewlyPage.value) {
+    scrollToTop(document.documentElement, targetScrollTop)
     topBarRef.value?.toggleTopBarVisible(true)
   }
 
   iframePageRef.value?.handleBackToTop()
-}
-
-function handleOsScroll() {
-  emitter.emit(OVERLAY_SCROLL_BAR_SCROLL)
-
-  const osInstance = scrollbarRef.value?.osInstance()
-  const { viewport } = osInstance.elements()
-  const { scrollTop, scrollHeight, clientHeight } = viewport // get scroll offset
-
-  if (scrollTop === 0) {
-    reachTop.value = true
-  }
-  else {
-    reachTop.value = false
-  }
-
-  if (clientHeight + scrollTop >= scrollHeight - 300)
-    handleThrottledReachBottom()
-
-  if (isHomePage())
-    topBarRef.value?.handleScroll()
 }
 
 function openIframeDrawer(url: string) {
@@ -356,24 +321,6 @@ function openIframeDrawer(url: string) {
 
   iframeDrawerURL.value = url
   showIframeDrawer.value = true
-}
-
-/**
- * Checks if the current viewport has a scrollbar.
- * @returns {boolean} Returns true if the viewport has a scrollbar, false otherwise.
- */
-async function haveScrollbar() {
-  await nextTick()
-  const osInstance = scrollbarRef.value?.osInstance()
-  // If the scrollbarRef is not ready, return false
-  if (osInstance) {
-    const { viewport } = osInstance.elements()
-    const { scrollHeight } = viewport // get scroll offset
-    return scrollHeight > window.innerHeight
-  }
-  else {
-    return false
-  }
 }
 
 // In drawer video, watch btn className changed and post message to parent
@@ -411,16 +358,13 @@ const { isWebFullscreen } = useWebFullscreen()
 provide<BewlyAppProvider>('BEWLY_APP', {
   activatedPage,
   mainAppRef,
-  scrollbarRef,
   reachTop,
   handleBackToTop,
   handlePageRefresh,
-  handleReachBottom,
   handleUndoRefresh,
   handleForwardRefresh,
   showUndoButton,
   openIframeDrawer,
-  haveScrollbar,
 })
 
 /* Block ‘Harmony Sans’ */
@@ -443,7 +387,7 @@ fontStyles.textContent = `
     font-family: "MiddleDotFont"; /* U+00B7 */
     unicode-range: U+00B7;
     font-feature-settings: "hwid" on;
-    src: url(${browser.runtime.getURL('/assets/fonts/FrexSansGBVF.woff2')}) format(woff2) tech(variations);
+    src: url(${browser.runtime.getURL('/assets/fonts/EliksiroSans-VF.woff2')}) format(woff2) tech(variations);
 }
 
 @font-face {
@@ -512,12 +456,15 @@ fontStyles.textContent = `
 
 @font-face {
     font-family: "ShangguSansSCVF-BewlyInternalResource"; /* Chinese characters old form */
+    font-weight: 250 900;
     src: url(${browser.runtime.getURL('/assets/fonts/ShangguSansSC-VF.woff2')}) format(woff2) tech(variations);
 }
 
 @font-face {
-    font-family: "FrexSansGBVF-BewlyInternalResource"; /* Chinese characters modern form */
-    src: url(${browser.runtime.getURL('/assets/fonts/FrexSansGBVF.woff2')}) format(woff2) tech(variations);
+    font-family: "EliksiroSans-BewlyInternalResource"; /* Chinese characters modern form */
+    font-weight: 100 700;
+    font-feature-settings: "ss11" on;
+    src: url(${browser.runtime.getURL('/assets/fonts/EliksiroSans-VF.woff2')}) format(woff2) tech(variations);
 }
 `
 
@@ -681,6 +628,7 @@ document.head.appendChild(removeLeftQuoteIndent)
     <div
       v-if="showTopBar"
       m-auto max-w="$bew-page-max-width"
+      pointer-events-auto
     >
       <BewlyOrBiliTopBarSwitcher v-if="settings.showBewlyOrBiliTopBarSwitcher" />
 
@@ -689,28 +637,23 @@ document.head.appendChild(removeLeftQuoteIndent)
       />
     </div>
 
+    <!-- 首页内容留在文档流中撑高文档，由文档负责滚动，OverlayScrollbars 也靠文档高度的变化判断能否滚动；原版页面模式下 iframe 铺满视口 -->
     <div
-      v-if="!settings.useOriginalBilibiliHomepage"
-      pos="absolute top-0 left-0" w-full h-full
-      :style="{
-        height: showBewlyPage || iframePageURL ? '100dvh' : '0',
-      }"
+      v-if="!settings.useOriginalBilibiliHomepage && (showBewlyPage || iframePageURL)"
+      w-full
+      :style="{ height: iframePageURL ? '100dvh' : undefined }"
     >
       <Transition name="fade">
-        <template v-if="showBewlyPage">
-          <OverlayScrollbarsComponent ref="scrollbarRef" element="div" h-inherit defer @os-scroll="handleOsScroll">
-            <main m-auto max-w="$bew-page-max-width">
-              <div
-                p="t-[calc(var(--bew-top-bar-height)+10px)]" m-auto
-                w="lg:[calc(100%-200px)] [calc(100%-150px)]"
-              >
-                <Transition name="page-fade">
-                  <Component :is="pages[activatedPage]" />
-                </Transition>
-              </div>
-            </main>
-          </OverlayScrollbarsComponent>
-        </template>
+        <main v-if="showBewlyPage" m-auto max-w="$bew-page-max-width">
+          <div
+            p="t-[calc(var(--bew-top-bar-height)+10px)]" m-auto
+            w="lg:[calc(100%-200px)] [calc(100%-150px)]"
+          >
+            <Transition name="page-fade">
+              <Component :is="pages[activatedPage]" />
+            </Transition>
+          </div>
+        </main>
       </Transition>
 
       <Transition v-if="!showBewlyPage && iframePageURL && !isInIframe()" name="fade">

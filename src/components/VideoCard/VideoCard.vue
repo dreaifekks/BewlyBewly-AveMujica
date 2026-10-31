@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { Icon } from '@iconify/vue'
 import type { CSSProperties } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 
 import Button from '~/components/Button.vue'
@@ -16,7 +17,7 @@ import { getCSRF, removeHttpFromUrl } from '~/utils/main'
 
 import Tooltip from '../Tooltip.vue'
 import type { Video } from './types'
-import { getCurrentTime, getCurrentVideoUrl, unblockUploader, VideoMoreCommand } from './utils'
+import { getCurrentTime, getCurrentVideoUrl, getWebDislikeReasonId, sendWebDislikeFeedback, unblockUploader, VideoMoreCommand } from './utils'
 import VideoCardAuthorAvatar from './VideoCardAuthor/components/VideoCardAuthorAvatar.vue'
 import VideoCardAuthorName from './VideoCardAuthor/components/VideoCardAuthorName.vue'
 import VideoCardContextMenu from './VideoCardContextMenu/VideoCardContextMenu.vue'
@@ -39,6 +40,7 @@ interface Props {
   moreBtn?: boolean
 }
 
+const { t } = useI18n()
 const toast = useToast()
 const { mainAppRef, openIframeDrawer } = useBewlyApp()
 const { setActivatedCover } = useMainStore()
@@ -122,6 +124,7 @@ function toggleWatchLater() {
         else
           toast.error(res.message)
       })
+      .catch(handleWatchLaterError)
   }
   else {
     api.watchlater.removeFromWatchLater({
@@ -134,7 +137,13 @@ function toggleWatchLater() {
         else
           toast.error(res.message)
       })
+      .catch(handleWatchLaterError)
   }
+}
+
+function handleWatchLaterError(error: unknown) {
+  console.error(error)
+  toast.error(t('common.operation_failed'))
 }
 
 function handleMouseEnter() {
@@ -191,7 +200,7 @@ function handleMoreBtnClick(event: MouseEvent) {
 
   showVideoOptions.value = false
   videoOptionsFloatingStyles.value = {
-    position: 'absolute',
+    position: 'fixed',
     top: 0,
     left: 0,
     transform: `translate(${event.x}px, ${event.y + finalOffsetTop}px)`,
@@ -200,6 +209,10 @@ function handleMoreBtnClick(event: MouseEvent) {
 }
 
 function handleUndo() {
+  const webDislikeReasonId = props.video && removedAction.value
+    ? getWebDislikeReasonId(props.video, removedAction.value)
+    : undefined
+
   if (removedAction.value === VideoMoreCommand.BlockUploader) {
     const authorMid = Array.isArray(props.video?.author)
       ? props.video?.author[0]?.mid
@@ -244,6 +257,21 @@ function handleUndo() {
       }
     })
   }
+  else if (props.video && webDislikeReasonId) {
+    sendWebDislikeFeedback(props.video, webDislikeReasonId, true).then((res) => {
+      if (res.code === 0) {
+        removed.value = false
+        removedAction.value = undefined
+        selectedDislikeOpt.value = undefined
+      }
+      else {
+        toast.error(res.message)
+      }
+    }).catch((error) => {
+      console.error(error)
+      toast.error(t('common.operation_failed'))
+    })
+  }
   else {
     removed.value = false
     removedAction.value = undefined
@@ -268,6 +296,7 @@ provide('getVideoType', () => props.type!)
 
 <template>
   <div
+    class="video-card-root"
     content-visibility="auto"
     intrinsic-size-300px
     duration-300 ease-in-out
@@ -277,13 +306,15 @@ provide('getVideoType', () => props.type!)
     transform="~ translate-z-0"
     mb-4
   >
-    <div v-if="!skeleton && video">
+    <div v-if="!skeleton && video" h="full">
       <div
         class="video-card group"
-        w="full"
+        w="full" h="full"
         rounded="$bew-radius"
       >
         <ALink
+          class="video-card-link"
+          h="full"
           :style="{ display: horizontal ? 'flex' : 'block', gap: horizontal ? '1.5rem' : '0' }"
           :href="videoUrl"
           type="videoCard"
@@ -330,11 +361,12 @@ provide('getVideoType', () => props.type!)
             </div>
 
             <!-- Video preview -->
+            <!-- 容器刻意外扩1px以盖住封面的抗锯齿边；请勿直接换成看似更加合适的clip-path圆角，其在至少macOS上的WebKit和Chromium中都会微量透出封面 -->
             <Transition v-if="!removed && showPreview && settings.enableVideoPreview" name="fade">
               <div
                 v-if="previewVideoUrl && isHover"
                 class="video-preview"
-                pos="absolute inset-0" overflow-hidden rounded="$bew-radius"
+                pos="absolute inset-[-1px]" overflow-hidden rounded="[calc(var(--bew-radius)+1px)]"
                 transform="~ translate-z-0" pointer-events-none
               >
                 <video
@@ -480,6 +512,7 @@ provide('getVideoType', () => props.type!)
                 <div
                   v-if="moreBtn"
                   ref="moreBtnRef"
+                  class="more-btn"
                   :class="{ 'more-active': showVideoOptions }"
                   bg="hover:$bew-fill-2 active:$bew-fill-3"
                   shrink-0 w-32px h-32px m="t--3px r--4px"
@@ -599,5 +632,20 @@ provide('getVideoType', () => props.type!)
 
 .more-active {
   --uno: "opacity-100";
+}
+
+.video-card-root {
+  overflow-clip-margin: 8px;
+}
+
+@supports not (overflow-clip-margin: 0px) {
+  .more-btn {
+    margin-right: 0;
+  }
+
+  .video-card-root:has(.video-card-link:focus-visible) {
+    outline-style: auto;
+    outline-offset: 1px;
+  }
 }
 </style>

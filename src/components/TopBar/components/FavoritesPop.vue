@@ -241,7 +241,7 @@ defineExpose({
             class="group"
             transition="~ duration-300"
           >
-            <section flex="~ gap-4" item-start>
+            <section flex="~ gap-4" items-start>
               <div
                 bg="$bew-skeleton"
                 w="120px"
@@ -254,7 +254,7 @@ defineExpose({
                     w="120px"
                     class="aspect-video"
                     :src="`${removeHttpFromUrl(item.cover)}@256w_144h_1c`"
-                    :alt="item.title"
+                    alt=""
                     bg="contain"
                   >
                   <div
@@ -271,7 +271,7 @@ defineExpose({
               </div>
 
               <!-- Description -->
-              <div>
+              <div min-w-0>
                 <h3
                   class="keep-two-lines"
                 >
@@ -280,8 +280,8 @@ defineExpose({
                 <div
                   text="$bew-text-2 sm"
                   m="t-2"
-                  flex="~"
-                  items-center
+                  truncate
+                  :title="item.upper.name"
                 >
                   {{ item.upper.name }}
                 </div>

@@ -21,6 +21,7 @@ common:
   added: Added
   performance_impact_warn: This feature may cause performance *DECREASE*!
   no_more_content: No more content now, owari da
+  operation_failed: Operation failed
 
   operation:
     add: Add
@@ -102,7 +103,7 @@ settings:
   # General
   touch_screen_optimization: Touch screen optimization
   touch_screen_optimization_desc: >
-    After this setting is turned on, like the top bar, you must click on items to view more information instead of hovering over them. (This feature is not supported by the old top bar.)
+    After this setting is turned on, like the top bar, you must click on items to view more information instead of hovering over them.
   chk_box:
     show: Show
     hidden: Hidden
@@ -272,6 +273,8 @@ settings:
     username_or_mid: Username / MID
 
   following_tab_show_livestreaming_videos: Show Live-streaming videos in the "Following" tab
+  following_tab_filter_by_duration: Filter by duration in the "Following" tab
+  following_tab_filter_by_duration_desc: Uses the "Filter by duration" setting from "For you" Recommendation Filters, which must be enabled first.
 
   use_search_page_mode: Use search page mode on homepage
   settings_shared_with_the_search_page: Settings shared with the search page
@@ -303,6 +306,14 @@ settings:
   url_trim_settings: URL Trim
   clean_url_argument: Remove unnecessary URL argument (will also remove unnecessary URL argument of 'Share' button)
   bv_to_av: Convert BV number to AV number
+  bilibili_api_based_settings: bilibili API-based Settings (may require login)
+  show_comment_ip_location: Show IP location of comments
+  show_comment_ip_location_desc: Only shown for comments that bilibili returns an IP location for, which may not happen when you're not logged in.
+  bili_translation: bilibili translation (experimental)
+  bili_translation_opt:
+    original: Original
+    zh_hant: Traditional Chinese
+    en: English
 
   # About
   links: Links
@@ -446,6 +457,7 @@ dock:
 video_card:
   operation:
     not_interested: Not Interested
+    not_interested_in_uploader: Not Interested in This Uploader
     open_in_new_tab: Open in New Tab
     open_in_new_window: Open in New Window
     open_in_current_tab: Open in Current Tab

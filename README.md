@@ -10,7 +10,7 @@ English | [官话 - 简体中文](README-cmn_CN.md) | [官話 - 繁體中文](RE
 
 <p align="center">Just make a few small changes to your bilibili homepage.</p>
 
-<p align="center"><img src="https://img.shields.io/github/v/release/dreaifekks/BewlyBewly-AveMujica"> <img src="https://img.shields.io/github/languages/code-size/dreaifekks/BewlyBewly-AveMujica"></p>
+<p align="center"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/dreaifekks/BewlyBewly-AveMujica"> <img alt="GitHub code size in bytes" src="https://img.shields.io/github/languages/code-size/dreaifekks/BewlyBewly-AveMujica"></p>
 
 ## Installation
 
@@ -46,3 +46,13 @@ See [docs/CONTRIBUTING.md](https://github.com/dreaifekks/BewlyBewly-AveMujica/bl
 - [UserScripts/bilibiliHome](https://github.com/indefined/UserScripts/tree/master/bilibiliHome), [bilibili-app-recommend](https://github.com/magicdawn/bilibili-app-recommend) - Reference source for obtaining the access key
 - [Bilibili-Evolved](https://github.com/the1812/Bilibili-Evolved) - Partial implementation of functionalities
 - [bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect)
+
+## License
+
+BewlyBewly! Ave Mujica licensed under [AGPLv3](./LICENSE), with three additional terms (according to Section 7 b, c, d):
+
+1. All copies or modified versions of this work shall retain prominent copyright notices and authorship attributions to the original source.
+
+2. Redistributions of modified versions must adopt distinguishable modifications to the software's name (e.g. by adding a "-Modified" suffix) to explicitly indicate altered status.
+
+3. Except with prior written consent from the copyright holder(s), the name(s) of the original author(s), associated material shall not be used to endorse or promote products derived from this software.

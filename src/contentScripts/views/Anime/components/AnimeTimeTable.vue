@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import browser from 'webextension-polyfill'
 
@@ -10,7 +9,6 @@ import { removeHttpFromUrl } from '~/utils/main'
 
 const { t } = useI18n()
 const animeTimeTable = reactive<TimetableItem[]>([])
-const animeTimeTableWrap = ref<HTMLElement>() as Ref<HTMLElement>
 
 const daysOfTheWeekList = computed(() => {
   return [
@@ -48,7 +46,7 @@ defineExpose({ refreshAnimeTimeTable })
 <template>
   <div>
     <HorizontalScrollView>
-      <ul ref="animeTimeTableWrap" flex="~">
+      <ul flex="~">
         <li
           v-for="item in animeTimeTable"
           :key="item.date_ts"
@@ -130,14 +128,14 @@ defineExpose({ refreshAnimeTimeTable })
               <div flex gap-4>
                 <a
                   :href="`//www.bilibili.com/bangumi/play/ss${episode.season_id}`"
-                  target="_blank" tabindex="-1"
+                  target="_blank" tabindex="-1" aria-hidden="true"
                   shrink-0
                 >
                   <img
                     :src="`${removeHttpFromUrl(
                       episode.square_cover,
                     )}@80w_80h.webp`"
-                    :alt="episode.title"
+                    alt=""
                     w-18
                     aspect="square"
                     rounded="$bew-radius-half"

@@ -1,5 +1,6 @@
 import browser from 'webextension-polyfill'
 
+import type { APIMAP } from '../../utils'
 import { apiListenerFactory } from '../../utils'
 import API_ANIME from './anime'
 import API_AUTH from './auth'
@@ -34,16 +35,12 @@ export const API_COLLECTION = {
 }
 
 // Merge all API objects into one
-const FullAPI = Object.assign({}, ...API_COLLECTION)
+export const FullAPI: APIMAP = Object.assign({}, ...API_COLLECTION)
 // Create a message listener for each API
 const handleMessage = apiListenerFactory(FullAPI)
 
+// 须在后台脚本顶层同步调用，不依赖 content script 先建立 port
 export function setupApiMsgLstnrs() {
-  browser.runtime.onConnect.removeListener(handleConnect)
-  browser.runtime.onConnect.addListener(handleConnect)
-}
-
-function handleConnect() {
   browser.runtime.onMessage.removeListener(handleMessage)
   browser.runtime.onMessage.addListener(handleMessage)
 }
