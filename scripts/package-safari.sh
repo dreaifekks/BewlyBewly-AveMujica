@@ -2,7 +2,14 @@
 # 把 extension-safari 打包成 macOS App 的 dmg，需要 macOS 和 Xcode，先运行 `bun run build-safari`。
 # 用法：scripts/package-safari.sh <输出的 dmg 路径>
 #
-# 没有 Apple 开发者证书，App 只做 ad-hoc 签名：Apple 芯片要求至少有这个签名才能运行，
+# 默认用钥匙串里第一个 Developer ID Application 证书签名，用户下载后可以直接安装和启用。
+# CODESIGN_IDENTITY 可以指定证书，设为 - 则强制 ad-hoc。
+# 同时设置了下面三个环境变量时再做公证，否则跳过公证：
+#   APPLE_API_KEY_P8_BASE64  App Store Connect API Key 文件的 base64
+#   APPLE_API_KEY_ID         API Key 的 ID
+#   APPLE_API_ISSUER_ID      API Key 的 Issuer ID
+#
+# 没有证书时只做 ad-hoc 签名：Apple 芯片要求至少有这个签名才能运行，
 # 但 Safari 不认它，需要在 Safari 里开启“允许未签名的扩展”才能启用。
 set -euo pipefail
 
@@ -15,6 +22,30 @@ MACOS_DEPLOYMENT_TARGET="14.0"
 VERSION="$(node -p "require('./extension-safari/manifest.json').version")"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
+
+IDENTITY="${CODESIGN_IDENTITY:-}"
+if [ -z "$IDENTITY" ]; then
+  IDENTITY="$(security find-identity -v -p codesigning | sed -n 's/.*"\(Developer ID Application: .*\)"$/\1/p' | head -n 1)"
+fi
+
+if [ -n "$IDENTITY" ] && [ "$IDENTITY" != "-" ]; then
+  # 证书名结尾的括号里是团队 ID
+  TEAM_ID="$(printf '%s' "$IDENTITY" | sed -n 's/.*(\([A-Z0-9]\{10\}\))$/\1/p')"
+  # 公证要求开启 hardened runtime 并带可信时间戳
+  SIGN_SETTINGS=(
+    CODE_SIGN_IDENTITY="$IDENTITY"
+    DEVELOPMENT_TEAM="$TEAM_ID"
+    ENABLE_HARDENED_RUNTIME=YES
+    OTHER_CODE_SIGN_FLAGS=--timestamp
+  )
+else
+  IDENTITY=""
+  echo "没有 Developer ID 证书，只做 ad-hoc 签名"
+  SIGN_SETTINGS=(
+    CODE_SIGN_IDENTITY="-"
+    DEVELOPMENT_TEAM=""
+  )
+fi
 
 xcrun safari-web-extension-converter ./extension-safari \
   --project-location "$WORK_DIR/project" \
@@ -37,10 +68,9 @@ xcodebuild \
   MACOSX_DEPLOYMENT_TARGET="$MACOS_DEPLOYMENT_TARGET" \
   MARKETING_VERSION="$VERSION" \
   CURRENT_PROJECT_VERSION="$VERSION" \
-  CODE_SIGN_IDENTITY="-" \
   CODE_SIGN_STYLE=Manual \
-  DEVELOPMENT_TEAM="" \
   PROVISIONING_PROFILE_SPECIFIER="" \
+  "${SIGN_SETTINGS[@]}" \
   -quiet \
   build
 
@@ -57,3 +87,24 @@ hdiutil create \
   -format UDZO \
   -ov \
   "$OUTPUT_DMG"
+
+if [ -z "$IDENTITY" ]; then
+  exit 0
+fi
+
+codesign --force --timestamp --sign "$IDENTITY" "$OUTPUT_DMG"
+
+if [ -z "${APPLE_API_KEY_P8_BASE64:-}" ] || [ -z "${APPLE_API_KEY_ID:-}" ] || [ -z "${APPLE_API_ISSUER_ID:-}" ]; then
+  echo "没有配置公证用的 API Key，跳过公证"
+  exit 0
+fi
+
+API_KEY_PATH="$WORK_DIR/AuthKey.p8"
+printf '%s' "$APPLE_API_KEY_P8_BASE64" | base64 --decode > "$API_KEY_PATH"
+xcrun notarytool submit "$OUTPUT_DMG" \
+  --key "$API_KEY_PATH" \
+  --key-id "$APPLE_API_KEY_ID" \
+  --issuer "$APPLE_API_ISSUER_ID" \
+  --wait
+xcrun stapler staple "$OUTPUT_DMG"
+spctl --assess --type open --context context:primary-signature --verbose "$OUTPUT_DMG"
