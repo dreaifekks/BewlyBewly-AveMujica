@@ -1,0 +1,123 @@
+name: Release
+
+# 推送 v* 标签时打包并发布 GitHub Release，标签必须和 package.json 的版本一致。
+# 手动运行只打包，产物在这次运行的 Artifacts 里，不会发布。
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-chrome-firefox:
+    name: Build Chrome and Firefox
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Read version
+        id: version
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::标签 $GITHUB_REF_NAME 和 package.json 的版本 $version 不一致"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Test
+        run: bun run test
+
+      - name: Build Chrome extension
+        run: bun run build
+
+      - name: Build Firefox extension
+        run: bun run build-firefox
+
+      - name: Zip
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          mkdir packages
+          (cd extension && zip -qr "../packages/bewlybewly-avemujica-$VERSION-chrome.zip" .)
+          (cd extension-firefox && zip -qr "../packages/bewlybewly-avemujica-$VERSION-firefox.zip" .)
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: chrome-firefox
+          path: packages/*
+          if-no-files-found: error
+
+  build-safari:
+    name: Build Safari
+    runs-on: macos-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build Safari extension
+        run: bun run build-safari
+
+      - name: Package zip and dmg
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          mkdir packages
+          (cd extension-safari && zip -qr "../packages/bewlybewly-avemujica-$version-safari.zip" .)
+          scripts/package-safari.sh "packages/bewlybewly-avemujica-$version-safari.dmg"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: safari
+          path: packages/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish release
+    if: github.ref_type == 'tag'
+    needs: [build-chrome-firefox, build-safari]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: packages
+          merge-multiple: true
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release create "$GITHUB_REF_NAME" packages/* --verify-tag --generate-notes
