@@ -31,14 +31,31 @@ fi
 if [ -n "$IDENTITY" ] && [ "$IDENTITY" != "-" ]; then
   # 证书名结尾的括号里是团队 ID
   TEAM_ID="$(printf '%s' "$IDENTITY" | sed -n 's/.*(\([A-Z0-9]\{10\}\))$/\1/p')"
+  # Xcode 注入的基础权限里有调试用的 get-task-allow，公证不允许，所以关掉注入。
+  # 转换器生成的工程靠注入写入沙盒权限，关掉后要显式给出，Safari 扩展必须开沙盒
+  ENTITLEMENTS_PATH="$WORK_DIR/release.entitlements"
+  cat > "$ENTITLEMENTS_PATH" <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>com.apple.security.app-sandbox</key>
+  <true/>
+  <key>com.apple.security.files.user-selected.read-only</key>
+  <true/>
+  <key>com.apple.security.network.client</key>
+  <true/>
+</dict>
+</plist>
+PLIST
   # 公证要求开启 hardened runtime 并带可信时间戳
   SIGN_SETTINGS=(
     CODE_SIGN_IDENTITY="$IDENTITY"
     DEVELOPMENT_TEAM="$TEAM_ID"
     ENABLE_HARDENED_RUNTIME=YES
     OTHER_CODE_SIGN_FLAGS=--timestamp
-    # 否则 Xcode 会注入调试用的 get-task-allow 权限，公证不允许
     CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO
+    CODE_SIGN_ENTITLEMENTS="$ENTITLEMENTS_PATH"
   )
 else
   IDENTITY=""
