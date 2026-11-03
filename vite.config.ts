@@ -10,7 +10,7 @@ import AutoImport from 'unplugin-auto-import/vite'
 import type { UserConfig } from 'vite'
 import { defineConfig } from 'vite'
 
-import { isDev, isFirefox, isSafari, r } from './scripts/utils.ts'
+import { isDev, isFirefox, isSafari, r, releaseTag } from './scripts/utils.ts'
 
 export const sharedConfig: UserConfig = {
   root: r('src'),
@@ -46,6 +46,7 @@ export const sharedConfig: UserConfig = {
 
     replace({
       '__DEV__': JSON.stringify(isDev),
+      '__RELEASE_TAG__': JSON.stringify(releaseTag),
       'process.env.NODE_ENV': JSON.stringify(isDev ? 'development' : 'production'),
       '__VUE_OPTIONS_API__': JSON.stringify(true),
       '__VUE_PROD_DEVTOOLS__': JSON.stringify(false),

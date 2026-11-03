@@ -8,6 +8,7 @@ export const r = (...args: string[]) => resolve(dirname(fileURLToPath(import.met
 export const isDev = process.env.NODE_ENV !== 'production'
 export const isFirefox = process.env.FIREFOX === 'true'
 export const isSafari = process.env.SAFARI === 'true'
+export const releaseTag = process.env.RELEASE_TAG ?? ''
 
 export function log(name: string, message: string) {
   console.log(black(bgCyan(` ${name} `)), message)

@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n'
 import browser from 'webextension-polyfill'
 
 import { originalSettings, settings } from '~/logic'
+import { isNewerRelease } from '~/utils/releaseTag'
 
 import { version } from '../../../../package.json'
 
@@ -10,6 +11,7 @@ const { t } = useI18n()
 
 const importSettingsRef = ref<HTMLElement>()
 const hasNewVersion = ref<boolean>(false)
+const displayVersion = __RELEASE_TAG__ || `v${version}`
 
 const dialogVisible = reactive({
   bilibiliPrivateAPIUsage: false,
@@ -86,12 +88,7 @@ async function checkGitHubRelease() {
       throw new Error('Network response was not ok')
 
     const data = await response.json()
-    const latestVersion = data.tag_name
-
-    // Here you can compare `latestVersion` with your current version
-    const currentVersion = `v${version}` // Replace with your actual current version
-
-    if (latestVersion !== currentVersion)
+    if (isNewerRelease(data.tag_name, version, __RELEASE_TAG__))
       hasNewVersion.value = true
   }
   catch {
@@ -131,7 +128,7 @@ async function checkGitHubRelease() {
             href="https://github.com/dreaifekks/BewlyBewly-AveMujica/releases" target="_blank"
             un-text="sm color-$bew-text-2 hover:color-$bew-text-3"
           >
-            v{{ version }}
+            {{ displayVersion }}
           </a>
         </p>
       </section>
