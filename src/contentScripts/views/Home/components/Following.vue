@@ -5,7 +5,7 @@ import { FilterType, useFilter } from '~/composables/useFilter'
 import type { InfiniteLoadResult } from '~/composables/useInfiniteList'
 import { useInfiniteList } from '~/composables/useInfiniteList'
 import type { GridLayoutType } from '~/logic'
-import { settings } from '~/logic'
+import { isHorizontalCardLayout, settings } from '~/logic'
 import type { FollowingLiveResult, List as FollowingLiveItem } from '~/models/live/getFollowingLiveList'
 import type { DataItem as MomentItem, MomentResult } from '~/models/moment/moment'
 import api from '~/utils/api'
@@ -23,7 +23,7 @@ interface LiveVideoElement {
   item?: FollowingLiveItem
 }
 
-const props = defineProps<{
+defineProps<{
   gridLayout: GridLayoutType
 }>()
 
@@ -31,14 +31,6 @@ const emit = defineEmits<{
   (e: 'beforeLoading'): void
   (e: 'afterLoading'): void
 }>()
-
-const gridClass = computed((): string => {
-  if (props.gridLayout === 'adaptive')
-    return 'grid-adaptive'
-  if (props.gridLayout === 'twoColumns')
-    return 'grid-two-columns'
-  return 'grid-one-column'
-})
 
 // 这里全是关注的 UP 主，所以不按关注状态放行
 const filterFunc = useFilter(
@@ -267,11 +259,7 @@ defineExpose({ initData })
         {{ $t('common.login') }}
       </Button>
     </Empty>
-    <div
-      v-else
-      m="b-0 t-0" relative w-full h-full
-      :class="gridClass"
-    >
+    <CardGrid v-else :layout="gridLayout">
       <template v-if="settings.followingTabShowLivestreamingVideos">
         <VideoCard
           v-for="video in liveVideoList"
@@ -293,7 +281,7 @@ defineExpose({ initData })
           } : undefined"
           type="live"
           :show-watcher-later="false"
-          :horizontal="gridLayout !== 'adaptive'"
+          :horizontal="isHorizontalCardLayout(gridLayout)"
         />
       </template>
 
@@ -319,26 +307,13 @@ defineExpose({ initData })
           } : undefined,
         } : undefined"
         show-preview
-        :horizontal="gridLayout !== 'adaptive'"
+        :horizontal="isHorizontalCardLayout(gridLayout)"
       />
-    </div>
-    <div ref="sentinel" aria-hidden="true" h-1px />
-
-    <!-- no more content -->
-    <Empty v-if="noMoreContent && !needToLoginFirst" class="pb-4" :description="$t('common.no_more_content')" />
+      <template #end>
+        <div ref="sentinel" aria-hidden="true" h-1px />
+        <!-- no more content -->
+        <Empty v-if="noMoreContent && !needToLoginFirst" class="pb-4" :description="$t('common.no_more_content')" />
+      </template>
+    </CardGrid>
   </div>
 </template>
-
-<style lang="scss" scoped>
-.grid-adaptive {
-  --uno: "grid 2xl:cols-5 xl:cols-4 lg:cols-3 md:cols-2 sm:cols-1 cols-1 gap-5";
-}
-
-.grid-two-columns {
-  --uno: "grid cols-1 xl:cols-2 gap-4";
-}
-
-.grid-one-column {
-  --uno: "grid cols-1 gap-4";
-}
-</style>

@@ -295,6 +295,9 @@ function handleActivatedPageClick() {
 function handleBackToTop(targetScrollTop = 0 as number) {
   if (showBewlyPage.value) {
     scrollToTop(document.documentElement, targetScrollTop)
+    // 横向滚动的卡片网格一并滚回最左边
+    mainAppRef.value?.querySelectorAll<HTMLElement>('[data-horizontal-scroll-grid]')
+      .forEach(el => el.scrollTo({ left: 0, behavior: 'smooth' }))
     topBarRef.value?.toggleTopBarVisible(true)
   }
 

@@ -11,9 +11,15 @@ export type InfiniteLoadResult = 'more' | 'empty' | 'done'
 export interface InfiniteListOptions {
   /** 放在列表末尾的哨兵元素 */
   sentinel: Readonly<Ref<HTMLElement | null | undefined>>
-  /** 列表所在的滚动容器，缺省为视口 */
+  /**
+   * 列表所在的滚动容器。缺省时取哨兵最近的带 `data-infinite-scroll-root` 的祖先，
+   * 例如横向滚动的卡片网格；都没有就用视口
+   */
   root?: MaybeRefOrGetter<HTMLElement | null | undefined>
-  /** 哨兵进入这个范围就开始加载，缺省为视口下方 300px */
+  /**
+   * 哨兵进入这个范围就开始加载，缺省为视口下方 300px。
+   * 自动找到的滚动容器可以用 `data-infinite-root-margin` 指定自己的范围
+   */
   rootMargin?: string
   /** 返回 false 时不加载，例如还没登录；条件变为 true 后需调用 `restart()` */
   canLoadMore?: () => boolean
@@ -49,8 +55,12 @@ export function useInfiniteList(options: InfiniteListOptions) {
   let emptyLoads = 0
   let removeResumeListener: (() => void) | undefined
 
+  function getRoot(): HTMLElement | null {
+    return toValue(root) ?? sentinel.value?.closest<HTMLElement>('[data-infinite-scroll-root]') ?? null
+  }
+
   function getScrollTarget(): HTMLElement | Window {
-    return toValue(root) ?? window
+    return getRoot() ?? window
   }
 
   function disconnect() {
@@ -65,10 +75,11 @@ export function useInfiniteList(options: InfiniteListOptions) {
     if (!active || done.value || removeResumeListener || !el)
       return
 
+    const rootEl = getRoot()
     observer = new IntersectionObserver((entries) => {
       if (entries.at(-1)?.isIntersecting)
         loadMore()
-    }, { root: toValue(root) ?? null, rootMargin })
+    }, { root: rootEl, rootMargin: rootEl?.dataset.infiniteRootMargin ?? rootMargin })
     observer.observe(el)
   }
 

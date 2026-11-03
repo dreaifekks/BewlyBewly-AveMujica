@@ -35,6 +35,7 @@ const gridLayoutIcons = computed((): GridLayoutIcon[] => {
     { icon: 'i-mingcute:table-3-line', iconActivated: 'i-mingcute:table-3-fill', value: 'adaptive' },
     { icon: 'i-mingcute:layout-grid-line', iconActivated: 'i-mingcute:layout-grid-fill', value: 'twoColumns' },
     { icon: 'i-mingcute:list-check-3-line', iconActivated: 'i-mingcute:list-check-3-fill', value: 'oneColumn' },
+    { icon: 'i-mingcute:columns-3-line', iconActivated: 'i-mingcute:columns-3-fill', value: 'horizontalScroll' },
   ]
 })
 
@@ -99,11 +100,18 @@ onUnmounted(() => {
   emitter.off(TOP_BAR_VISIBILITY_CHANGE)
 })
 
+const mainRef = useTemplateRef<HTMLElement>('main')
+
+/** 横向滚动布局下卡片网格滚出去的距离，其他布局为 0 */
+function getHorizontalScrollLeft(): number {
+  return mainRef.value?.querySelector<HTMLElement>('[data-horizontal-scroll-grid]')?.scrollLeft ?? 0
+}
+
 function handleChangeTab(tab: HomeTab) {
   if (activatedPage.value === tab.page) {
     const scrollTop = document.documentElement.scrollTop
 
-    if ((!settings.value.useSearchPageModeOnHomePage && scrollTop > 0) || (settings.value.useSearchPageModeOnHomePage && scrollTop > 510)) {
+    if ((!settings.value.useSearchPageModeOnHomePage && scrollTop > 0) || (settings.value.useSearchPageModeOnHomePage && scrollTop > 510) || getHorizontalScrollLeft() > 0) {
       handleThrottledBackToTop(settings.value.useSearchPageModeOnHomePage ? 510 : 0)
     }
     else {
@@ -165,7 +173,7 @@ function toggleTabContentLoading(loading: boolean) {
       </div>
     </Transition>
 
-    <main>
+    <main ref="main">
       <!-- Home search page mode content -->
       <Transition name="content">
         <div

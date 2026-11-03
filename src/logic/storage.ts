@@ -253,7 +253,12 @@ export const originalSettings: Settings = {
 
 export const settings = useStorageLocal('settings', ref<Settings>(originalSettings), { mergeDefaults: true })
 
-export type GridLayoutType = 'adaptive' | 'twoColumns' | 'oneColumn'
+export type GridLayoutType = 'adaptive' | 'twoColumns' | 'oneColumn' | 'horizontalScroll'
+
+/** 只有自适应布局用竖版卡片，其余都用横版卡片（封面在左、信息在右） */
+export function isHorizontalCardLayout(layout: GridLayoutType): boolean {
+  return layout !== 'adaptive'
+}
 
 export interface GridLayout {
   home: GridLayoutType

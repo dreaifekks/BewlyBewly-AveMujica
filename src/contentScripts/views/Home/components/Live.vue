@@ -3,6 +3,7 @@ import { useBewlyApp } from '~/composables/useAppProvider'
 import type { InfiniteLoadResult } from '~/composables/useInfiniteList'
 import { useInfiniteList } from '~/composables/useInfiniteList'
 import type { GridLayoutType } from '~/logic'
+import { isHorizontalCardLayout } from '~/logic'
 import type { FollowingLiveResult, List as FollowingLiveItem } from '~/models/live/getFollowingLiveList'
 import api from '~/utils/api'
 
@@ -12,7 +13,7 @@ interface VideoElement {
   item?: FollowingLiveItem
 }
 
-const props = defineProps<{
+defineProps<{
   gridLayout: GridLayoutType
 }>()
 
@@ -20,14 +21,6 @@ const emit = defineEmits<{
   (e: 'beforeLoading'): void
   (e: 'afterLoading'): void
 }>()
-
-const gridClass = computed((): string => {
-  if (props.gridLayout === 'adaptive')
-    return 'grid-adaptive'
-  if (props.gridLayout === 'twoColumns')
-    return 'grid-two-columns'
-  return 'grid-one-column'
-})
 
 const videoList = ref<VideoElement[]>([])
 const needToLoginFirst = ref<boolean>(false)
@@ -141,11 +134,7 @@ defineExpose({ initData })
         {{ $t('common.login') }}
       </Button>
     </Empty>
-    <div
-      v-else
-      m="b-0 t-0" relative w-full h-full
-      :class="gridClass"
-    >
+    <CardGrid v-else :layout="gridLayout">
       <VideoCard
         v-for="video in videoList"
         :key="video.uniqueId"
@@ -166,26 +155,13 @@ defineExpose({ initData })
         } : undefined"
         type="live"
         :show-watcher-later="false"
-        :horizontal="gridLayout !== 'adaptive'"
+        :horizontal="isHorizontalCardLayout(gridLayout)"
       />
-    </div>
-    <div ref="sentinel" aria-hidden="true" h-1px />
-
-    <!-- no more content -->
-    <Empty v-if="noMoreContent && !needToLoginFirst" class="pb-4" :description="$t('common.no_more_content')" />
+      <template #end>
+        <div ref="sentinel" aria-hidden="true" h-1px />
+        <!-- no more content -->
+        <Empty v-if="noMoreContent && !needToLoginFirst" class="pb-4" :description="$t('common.no_more_content')" />
+      </template>
+    </CardGrid>
   </div>
 </template>
-
-<style lang="scss" scoped>
-.grid-adaptive {
-  --uno: "grid 2xl:cols-5 xl:cols-4 lg:cols-3 md:cols-2 sm:cols-1 cols-1 gap-5";
-}
-
-.grid-two-columns {
-  --uno: "grid cols-1 xl:cols-2 gap-4";
-}
-
-.grid-one-column {
-  --uno: "grid cols-1 gap-4";
-}
-</style>

@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useBewlyApp } from '~/composables/useAppProvider'
 import { getBiliTranslationParams } from '~/contentScripts/biliTranslation'
 import type { GridLayoutType } from '~/logic'
-import { settings } from '~/logic'
+import { isHorizontalCardLayout, settings } from '~/logic'
 import type { List as RankingVideoItem, RankingResult } from '~/models/video/ranking'
 import type { List as RankingPgcItem, RankingPgcResult } from '~/models/video/rankingPgc'
 import api from '~/utils/api'
@@ -24,20 +24,6 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const { handleBackToTop, handlePageRefresh } = useBewlyApp()
-
-const gridClass = computed((): string => {
-  if (props.gridLayout === 'adaptive') {
-    // eslint-disable-next-line ts/no-use-before-define
-    if (!activatedRankingType.value.seasonType)
-      return 'grid-adaptive-video'
-    else
-      return 'grid-adaptive-bangumi'
-  }
-
-  if (props.gridLayout === 'twoColumns')
-    return 'grid-two-columns'
-  return 'grid-one-column'
-})
 
 const rankingTypes = computed((): RankingType[] => {
   return [
@@ -185,72 +171,77 @@ defineExpose({ initData })
       </OverlayScrollbarsComponent>
     </aside>
 
-    <main w-full :class="gridClass">
-      <template v-if="!('seasonType' in activatedRankingType)">
-        <VideoCard
-          v-for="(video, index) in videoList"
-          :key="video.aid"
-          :video="{
-            id: Number(video.aid),
-            duration: video.duration,
-            title: getTranslatedTitle(video),
-            desc: video.desc,
-            cover: video.pic,
-            author: {
-              name: video.owner.name,
-              authorFace: video.owner.face,
-              mid: video.owner.mid,
-            },
-            view: video.stat.view,
-            danmaku: video.stat.danmaku,
-            publishedTimestamp: video.pubdate,
-            bvid: video.bvid,
-            rank: index + 1,
-            cid: video.cid,
-          }"
-          show-preview
-          :horizontal="gridLayout !== 'adaptive'"
-          w-full
-        />
-      </template>
-      <template v-else>
-        <BangumiCard
-          v-for="pgc in PgcList"
-          :key="pgc.url"
-          :bangumi="{
-            url: pgc.url,
-            cover: pgc.cover,
-            title: pgc.title,
-            desc: pgc.new_ep.index_show,
-            view: pgc.stat.view,
-            follow: pgc.stat.follow,
-            rank: pgc.rank,
-            capsuleText: pgc.rating.replace('分', ''),
-            badge: {
-              text: pgc.badge_info.text || '',
-              bgColor: pgc.badge_info.bg_color || '',
-              bgColorDark: pgc.badge_info.bg_color_night || '',
-            },
-          }"
-          :horizontal="gridLayout !== 'adaptive'"
-        />
-      </template>
-
-      <!-- skeleton -->
-      <template v-if="isLoading">
+    <main w-full min-w-0>
+      <CardGrid
+        :layout="gridLayout"
+        :adaptive-cols="'seasonType' in activatedRankingType ? 'bangumi' : 'wide'"
+      >
         <template v-if="!('seasonType' in activatedRankingType)">
-          <VideoCardSkeleton
-            v-for="item in 30" :key="item"
-            :horizontal="gridLayout !== 'adaptive'"
+          <VideoCard
+            v-for="(video, index) in videoList"
+            :key="video.aid"
+            :video="{
+              id: Number(video.aid),
+              duration: video.duration,
+              title: getTranslatedTitle(video),
+              desc: video.desc,
+              cover: video.pic,
+              author: {
+                name: video.owner.name,
+                authorFace: video.owner.face,
+                mid: video.owner.mid,
+              },
+              view: video.stat.view,
+              danmaku: video.stat.danmaku,
+              publishedTimestamp: video.pubdate,
+              bvid: video.bvid,
+              rank: index + 1,
+              cid: video.cid,
+            }"
+            show-preview
+            :horizontal="isHorizontalCardLayout(gridLayout)"
+            w-full
           />
         </template>
         <template v-else>
-          <BangumiCardSkeleton
-            v-for="item in 30" :key="item"
-            :horizontal="gridLayout !== 'adaptive'"
+          <BangumiCard
+            v-for="pgc in PgcList"
+            :key="pgc.url"
+            :bangumi="{
+              url: pgc.url,
+              cover: pgc.cover,
+              title: pgc.title,
+              desc: pgc.new_ep.index_show,
+              view: pgc.stat.view,
+              follow: pgc.stat.follow,
+              rank: pgc.rank,
+              capsuleText: pgc.rating.replace('分', ''),
+              badge: {
+                text: pgc.badge_info.text || '',
+                bgColor: pgc.badge_info.bg_color || '',
+                bgColorDark: pgc.badge_info.bg_color_night || '',
+              },
+            }"
+            :horizontal="isHorizontalCardLayout(gridLayout)"
           />
         </template>
-      </template>
+
+        <!-- skeleton -->
+        <template v-if="isLoading">
+          <template v-if="!('seasonType' in activatedRankingType)">
+            <VideoCardSkeleton
+              v-for="item in 30" :key="item"
+              :horizontal="isHorizontalCardLayout(gridLayout)"
+            />
+          </template>
+          <template v-else>
+            <BangumiCardSkeleton
+              v-for="item in 30" :key="item"
+              :horizontal="isHorizontalCardLayout(gridLayout)"
+            />
+          </template>
+        </template>
+      </CardGrid>
     </main>
   </div>
 </template>
@@ -262,21 +253,5 @@ defineExpose({ initData })
 
 .hide {
   --uno: "h-[calc(100vh-70)] translate-y--70px";
-}
-
-.grid-adaptive-video {
-  --uno: "grid 2xl:cols-4 xl:cols-3 lg:cols-2 md:cols-1 sm:cols-1 cols-1 gap-5";
-}
-
-.grid-adaptive-bangumi {
-  --uno: "grid 2xl:cols-5 xl:cols-4 lg:cols-3 md:cols-2 gap-5";
-}
-
-.grid-two-columns {
-  --uno: "grid cols-1 xl:cols-2 gap-4";
-}
-
-.grid-one-column {
-  --uno: "grid cols-1 gap-4";
 }
 </style>

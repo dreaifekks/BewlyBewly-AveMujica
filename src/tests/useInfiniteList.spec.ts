@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createApp, defineComponent, h, ref } from 'vue'
+import { createApp, defineComponent, h, ref, watchEffect } from 'vue'
 
 import type { InfiniteListOptions, InfiniteLoadResult } from '../composables/useInfiniteList'
 import { useInfiniteList } from '../composables/useInfiniteList'
@@ -9,7 +9,7 @@ let intersecting = true
 const observers = new Set<MockIntersectionObserver>()
 
 class MockIntersectionObserver {
-  constructor(private callback: IntersectionObserverCallback) {
+  constructor(private callback: IntersectionObserverCallback, public options?: IntersectionObserverInit) {
     observers.add(this)
   }
 
@@ -171,5 +171,44 @@ describe('useInfiniteList', () => {
     unmount()
     expect(signal?.aborted).toBe(true)
     expect(observers.size).toBe(0)
+  })
+
+  it('observes within the nearest scroll root marked on an ancestor', async () => {
+    intersecting = false
+    let scroller!: HTMLElement
+    const app = createApp(defineComponent({
+      setup() {
+        const sentinel = ref<HTMLElement>()
+        const root = ref<HTMLElement>()
+        useInfiniteList({ sentinel, load: async () => 'more' })
+        watchEffect(() => {
+          if (root.value)
+            scroller = root.value
+        })
+        return () => h('div', {
+          'ref': root,
+          'data-infinite-scroll-root': '',
+          'data-infinite-root-margin': '0px 900px 0px 0px',
+        }, [h('div', { ref: sentinel })])
+      },
+    }))
+    app.mount(document.createElement('div'))
+    await settle()
+
+    const [observer] = observers
+    expect(observer.options?.root).toBe(scroller)
+    expect(observer.options?.rootMargin).toBe('0px 900px 0px 0px')
+    app.unmount()
+  })
+
+  it('falls back to the viewport when no scroll root is marked', async () => {
+    intersecting = false
+    const { unmount } = mountList({ load: async () => 'more' })
+    await settle()
+
+    const [observer] = observers
+    expect(observer.options?.root).toBeNull()
+    expect(observer.options?.rootMargin).toBe('0px 0px 300px 0px')
+    unmount()
   })
 })

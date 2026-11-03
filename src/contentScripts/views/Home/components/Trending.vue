@@ -4,6 +4,7 @@ import type { InfiniteLoadResult } from '~/composables/useInfiniteList'
 import { useInfiniteList } from '~/composables/useInfiniteList'
 import { getBiliTranslationParams } from '~/contentScripts/biliTranslation'
 import type { GridLayoutType } from '~/logic'
+import { isHorizontalCardLayout } from '~/logic'
 import type { List as VideoItem, TrendingResult } from '~/models/video/trending'
 import api from '~/utils/api'
 import { getTranslatedTitle } from '~/utils/biliTranslation'
@@ -14,7 +15,7 @@ interface VideoElement {
   item?: VideoItem
 }
 
-const props = defineProps<{
+defineProps<{
   gridLayout: GridLayoutType
 }>()
 
@@ -23,13 +24,6 @@ const emit = defineEmits<{
   (e: 'afterLoading'): void
 }>()
 
-const gridClass = computed((): string => {
-  if (props.gridLayout === 'adaptive')
-    return 'grid-adaptive'
-  if (props.gridLayout === 'twoColumns')
-    return 'grid-two-columns'
-  return 'grid-one-column'
-})
 const videoList = ref<VideoElement[]>([])
 const pn = ref<number>(1)
 const noMoreContent = ref<boolean>(false)
@@ -123,10 +117,7 @@ defineExpose({ initData })
 
 <template>
   <div>
-    <div
-      m="b-0 t-0" relative w-full h-full
-      :class="gridClass"
-    >
+    <CardGrid :layout="gridLayout">
       <VideoCard
         v-for="video in videoList"
         :key="video.uniqueId"
@@ -150,23 +141,11 @@ defineExpose({ initData })
           cid: video.item.cid,
         } : undefined"
         show-preview
-        :horizontal="gridLayout !== 'adaptive'"
+        :horizontal="isHorizontalCardLayout(gridLayout)"
       />
-    </div>
-    <div ref="sentinel" aria-hidden="true" h-1px />
+      <template #end>
+        <div ref="sentinel" aria-hidden="true" h-1px />
+      </template>
+    </CardGrid>
   </div>
 </template>
-
-<style lang="scss" scoped>
-.grid-adaptive {
-  --uno: "grid 2xl:cols-5 xl:cols-4 lg:cols-3 md:cols-2 sm:cols-1 cols-1 gap-5";
-}
-
-.grid-two-columns {
-  --uno: "grid cols-1 xl:cols-2 gap-4";
-}
-
-.grid-one-column {
-  --uno: "grid cols-1 gap-4";
-}
-</style>

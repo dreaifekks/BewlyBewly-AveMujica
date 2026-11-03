@@ -9,7 +9,7 @@ import { useInfiniteList } from '~/composables/useInfiniteList'
 import { getBiliTranslationParams } from '~/contentScripts/biliTranslation'
 import { LanguageType } from '~/enums/appEnums'
 import type { GridLayoutType } from '~/logic'
-import { accessKey, settings } from '~/logic'
+import { accessKey, isHorizontalCardLayout, settings } from '~/logic'
 import type { AppForYouResult, Item as AppVideoItem } from '~/models/video/appForYou'
 import { Type as ThreePointV2Type } from '~/models/video/appForYou'
 import type { forYouResult, Item as VideoItem } from '~/models/video/forYou'
@@ -18,7 +18,7 @@ import { TVAppKey } from '~/utils/authProvider'
 import { getTranslatedTitle } from '~/utils/biliTranslation'
 import { isVerticalVideo } from '~/utils/uriParse'
 
-const props = defineProps<{
+defineProps<{
   gridLayout: GridLayoutType
 }>()
 
@@ -81,14 +81,6 @@ interface AppVideoElement {
   uniqueId: string
   item?: AppVideoItem
 }
-
-const gridClass = computed((): string => {
-  if (props.gridLayout === 'adaptive')
-    return 'grid-adaptive'
-  if (props.gridLayout === 'twoColumns')
-    return 'grid-two-columns'
-  return 'grid-one-column'
-})
 
 const videoList = ref<VideoElement[]>([])
 const appVideoList = ref<AppVideoElement[]>([])
@@ -526,11 +518,7 @@ defineExpose({
       </Button>
     </Empty>
 
-    <div
-      v-else
-      m="b-0 t-0" relative w-full h-full
-      :class="gridClass"
-    >
+    <CardGrid v-else :layout="gridLayout">
       <template v-if="settings.recommendationMode === 'web'">
         <VideoCard
           v-for="video in videoList"
@@ -558,7 +546,7 @@ defineExpose({
             dislikeSwitch: !!video.item.dislike_switch,
           } : undefined"
           show-preview
-          :horizontal="gridLayout !== 'adaptive'"
+          :horizontal="isHorizontalCardLayout(gridLayout)"
           more-btn
         />
       </template>
@@ -590,30 +578,17 @@ defineExpose({
             threePointV2: video.item?.three_point_v2,
           } : undefined"
           show-preview
-          :horizontal="gridLayout !== 'adaptive'"
+          :horizontal="isHorizontalCardLayout(gridLayout)"
           more-btn
         />
         <!-- :more-options="video.three_point_v2" -->
       </template>
-    </div>
-    <div ref="sentinel" aria-hidden="true" h-1px />
-
-    <Loading v-show="isLoading" />
-    <!-- no more content -->
-    <Empty v-if="noMoreContent" class="pb-4" :description="$t('common.no_more_content')" />
+      <template #end>
+        <div ref="sentinel" aria-hidden="true" h-1px />
+        <Loading v-show="isLoading" />
+        <!-- no more content -->
+        <Empty v-if="noMoreContent" class="pb-4" :description="$t('common.no_more_content')" />
+      </template>
+    </CardGrid>
   </div>
 </template>
-
-<style lang="scss" scoped>
-.grid-adaptive {
-  --uno: "grid 2xl:cols-5 xl:cols-4 lg:cols-3 md:cols-2 sm:cols-1 cols-1 gap-5";
-}
-
-.grid-two-columns {
-  --uno: "grid cols-1 xl:cols-2 gap-4";
-}
-
-.grid-one-column {
-  --uno: "grid cols-1 gap-4";
-}
-</style>
