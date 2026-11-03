@@ -37,6 +37,8 @@ if [ -n "$IDENTITY" ] && [ "$IDENTITY" != "-" ]; then
     DEVELOPMENT_TEAM="$TEAM_ID"
     ENABLE_HARDENED_RUNTIME=YES
     OTHER_CODE_SIGN_FLAGS=--timestamp
+    # 否则 Xcode 会注入调试用的 get-task-allow 权限，公证不允许
+    CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO
   )
 else
   IDENTITY=""
@@ -101,10 +103,13 @@ fi
 
 API_KEY_PATH="$WORK_DIR/AuthKey.p8"
 printf '%s' "$APPLE_API_KEY_P8_BASE64" | base64 --decode > "$API_KEY_PATH"
-xcrun notarytool submit "$OUTPUT_DMG" \
-  --key "$API_KEY_PATH" \
-  --key-id "$APPLE_API_KEY_ID" \
-  --issuer "$APPLE_API_ISSUER_ID" \
-  --wait
+NOTARY_AUTH=(--key "$API_KEY_PATH" --key-id "$APPLE_API_KEY_ID" --issuer "$APPLE_API_ISSUER_ID")
+NOTARY_RESULT="$(xcrun notarytool submit "$OUTPUT_DMG" "${NOTARY_AUTH[@]}" --wait --output-format json)"
+NOTARY_STATUS="$(printf '%s' "$NOTARY_RESULT" | node -p "JSON.parse(require('fs').readFileSync(0)).status")"
+if [ "$NOTARY_STATUS" != "Accepted" ]; then
+  echo "公证没有通过：$NOTARY_STATUS"
+  xcrun notarytool log "$(printf '%s' "$NOTARY_RESULT" | node -p "JSON.parse(require('fs').readFileSync(0)).id")" "${NOTARY_AUTH[@]}"
+  exit 1
+fi
 xcrun stapler staple "$OUTPUT_DMG"
 spctl --assess --type open --context context:primary-signature --verbose "$OUTPUT_DMG"
