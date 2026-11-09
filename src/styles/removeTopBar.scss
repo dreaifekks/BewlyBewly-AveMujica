@@ -24,7 +24,9 @@
 }
 
 .remove-top-bar-without-placeholder {
-  #biliMainHeader {
+  #biliMainHeader,
+  // 动态详情页的顶栏
+  #bili-header-container {
     display: none;
   }
 }

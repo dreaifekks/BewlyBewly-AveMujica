@@ -12,7 +12,7 @@ import RESET_BEWLY_CSS from '~/styles/reset.css?raw'
 import { syncAccessKey } from '~/utils/authProvider'
 import { syncBiliSite } from '~/utils/biliSite'
 import { runWhenIdle } from '~/utils/lazyLoad'
-import { compareVersions, injectCSS, isHomePage, isInIframe, isNotificationPage, isVideoOrBangumiPage, stripBiliLangPrefix } from '~/utils/main'
+import { compareVersions, injectCSS, isHomePage, isInIframe, isMomentDetailPage, isNotificationPage, isVideoOrBangumiPage, stripBiliLangPrefix } from '~/utils/main'
 import { SVG_ICONS } from '~/utils/svgIcons'
 
 import { version } from '../../package.json'
@@ -109,6 +109,8 @@ export function isSupportedIframePages(): boolean {
       isHomePage()
       // Since `Open in drawer` will open the video page within an iframe, so we need to support the following pages
       || isVideoOrBangumiPage()
+      // 动态页的图文卡片在抽屉里打开动态详情
+      || isMomentDetailPage()
       || /https?:\/\/search\.bilibili\.com\/all.*/.test(currentUrl)
       || /https?:\/\/www\.bilibili\.com\/anime.*/.test(currentUrl)
       || /https?:\/\/space\.bilibili\.com\/\d+\/favlist.*/.test(currentUrl)

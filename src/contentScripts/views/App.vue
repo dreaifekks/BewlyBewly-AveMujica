@@ -13,7 +13,7 @@ import { runSettingsMigrations } from '~/logic/migrations'
 import type { DockItem } from '~/stores/mainStore'
 import { useMainStore } from '~/stores/mainStore'
 import { useSettingsStore } from '~/stores/settingsStore'
-import { isHomePage, isInIframe, isNotificationPage, isVideoOrBangumiPage, openLinkToNewTab, queryDomUntilFound, scrollToTop } from '~/utils/main'
+import { isHomePage, isInIframe, isMomentDetailPage, isNotificationPage, isVideoOrBangumiPage, openLinkToNewTab, queryDomUntilFound, scrollToTop } from '~/utils/main'
 import { initUrlCleaner } from '~/utils/urlCleaner'
 
 import { setupNecessarySettingsWatchers } from './necessarySettingsWatchers'
@@ -175,7 +175,7 @@ watch(
 
 const showTopBar = computed((): boolean => {
   // When using the open in drawer feature, the iframe inside the page will hide the top bar
-  if (isVideoOrBangumiPage() && isInIframe())
+  if ((isVideoOrBangumiPage() || isMomentDetailPage()) && isInIframe())
     return false
 
   // when user open the notifications page as a drawer, don't show the top bar

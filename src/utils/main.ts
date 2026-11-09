@@ -218,6 +218,15 @@ export function isVideoOrBangumiPage(url: string = location.href): boolean {
 }
 
 /**
+ * 动态详情页（图文、纯文字和新版专栏），动态页的卡片会在抽屉里打开它
+ * @param url the url to check
+ * @returns true if the current page is a moment detail page
+ */
+export function isMomentDetailPage(url: string = location.href): boolean {
+  return /https?:\/\/(?:www\.)?bilibili\.com\/opus\/.*/.test(stripBiliLangPrefix(url))
+}
+
+/**
  * Check if the current page is the notifications page
  * @param url the url to check
  * @returns true if the current page is the notifications page
