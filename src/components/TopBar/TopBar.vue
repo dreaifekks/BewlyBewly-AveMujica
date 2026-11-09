@@ -10,6 +10,7 @@ import { useWebFullscreen } from '~/composables/useWebFullscreen'
 import { TOP_BAR_VISIBILITY_CHANGE } from '~/constants/globalEvents'
 import { AppPage } from '~/enums/appEnums'
 import { settings } from '~/logic'
+import { useSettingsStore } from '~/stores/settingsStore'
 import api from '~/utils/api'
 import { getUserID, isHomePage, isInIframe, removeHttpFromUrl, stripBiliLangPrefix } from '~/utils/main'
 import emitter from '~/utils/mitt'
@@ -31,6 +32,7 @@ import type { UnReadDm, UnReadMessage, UserInfo } from './types'
 
 const { activatedPage, reachTop } = useBewlyApp()
 const { isDark } = useDark()
+const settingsStore = useSettingsStore()
 
 const mid = getUserID() || ''
 const userInfo = reactive<UserInfo | NonNullable<unknown>>({}) as UnwrapNestedRefs<UserInfo>
@@ -621,7 +623,7 @@ defineExpose({
                   </template>
                   <ALink
                     :class="{ 'white-icon': forceWhiteIcon }"
-                    href="https://t.bilibili.com"
+                    :href="settingsStore.momentsPageUrl"
                     :title="$t('topbar.moments')"
                     type="topBar"
                   >

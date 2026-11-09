@@ -8,6 +8,7 @@ import Loading from '~/components/Loading.vue'
 import Tooltip from '~/components/Tooltip.vue'
 import type { TopBarLiveMomentResult } from '~/models/moment/topBarLiveMoment'
 import type { TopBarMomentResult } from '~/models/moment/topBarMoment'
+import { useSettingsStore } from '~/stores/settingsStore'
 import api from '~/utils/api'
 import { getCSRF, scrollToTop } from '~/utils/main'
 
@@ -27,6 +28,7 @@ interface MomentCard {
 
 const { t } = useI18n()
 const toast = useToast()
+const settingsStore = useSettingsStore()
 
 const moments = reactive<MomentCard[]>([])
 const addedWatchLaterList = reactive<number[]>([])
@@ -324,7 +326,7 @@ defineExpose({
         </div>
       </div>
       <ALink
-        href="https://t.bilibili.com/"
+        :href="settingsStore.momentsPageUrl"
         type="topBar"
         flex="~ items-center"
       >

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 
-import type { AppPage } from '~/enums/appEnums'
+import { AppPage } from '~/enums/appEnums'
 import { settings } from '~/logic'
 
 export interface DockItemConfig {
@@ -19,5 +19,12 @@ export const useSettingsStore = defineStore('settings', () => {
     return settings.value.dockItemsConfig.find(e => e.page === page)?.useOriginalBiliPage || false
   }
 
-  return { getDockItemConfigByPage, getDockItemIsUseOriginalBiliPage }
+  /** 顶栏等处的「动态」入口：用着 Bewly 的动态页时指向它，否则指向B站的动态页 */
+  const momentsPageUrl = computed((): string => {
+    if (settings.value.useOriginalBilibiliHomepage || getDockItemIsUseOriginalBiliPage(AppPage.Moments))
+      return 'https://t.bilibili.com/'
+    return `https://www.bilibili.com/?page=${AppPage.Moments}`
+  })
+
+  return { getDockItemConfigByPage, getDockItemIsUseOriginalBiliPage, momentsPageUrl }
 })
