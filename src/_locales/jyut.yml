@@ -523,3 +523,42 @@ watch_later:
 search_bar:
   history_title: 搜尋記錄
   clear_history: 剷晒你啲搜尋記錄
+
+moments:
+  tabs:
+    all: 全部
+    video: 影片
+    dynamic: 動向
+    dynamic_desc: 圖文、純文字同轉發
+    article: 文章
+  nouns:
+    all: 動向
+    video: 影片
+    dynamic: 圖文動向
+    article: 文章
+  empty: 仲未有{type}
+  empty_of_up: '{name} 仲未有{type}'
+  all_moments: 全部動向
+  all_following: 全部跟緊嘅人
+  only_show: 淨係睇
+  live: Live緊
+  live_ended: 直播完咗
+  watched: '{count}人睇過'
+  enter_live_room: 入直播間
+  only_their_moments: 淨係睇佢嘅動向
+  new_moments: '{count} 條新動向'
+  columns: '{count} 欄'
+  window_too_narrow: 視窗唔夠闊
+  expand: 展開
+  full_text: 睇全文
+  forward: 轉發
+  comment: 評論
+  like: 讚
+  like_failed: 讚唔到
+  article: 文章
+  original_deleted: 原本嘅動向已經刪咗
+  load_failed: 載入唔到
+  retry: 再試
+  scroll_left: 向左
+  scroll_right: 向右
+  close: 關閉

@@ -542,3 +542,42 @@ watch_later:
 search_bar:
   history_title: Search History
   clear_history: Clear search history
+
+moments:
+  tabs:
+    all: All
+    video: Videos
+    dynamic: Posts
+    dynamic_desc: Image, text and repost posts
+    article: Articles
+  nouns:
+    all: moments
+    video: videos
+    dynamic: posts
+    article: articles
+  empty: No {type} yet
+  empty_of_up: '{name} has no {type} yet'
+  all_moments: All moments
+  all_following: All following
+  only_show: Only
+  live: Live
+  live_ended: Stream ended
+  watched: '{count} watched'
+  enter_live_room: Watch live
+  only_their_moments: Only their moments
+  new_moments: '{count} new moments'
+  columns: '{count} columns'
+  window_too_narrow: The window is too narrow
+  expand: Show more
+  full_text: Read full text
+  forward: Repost
+  comment: Comment
+  like: Like
+  like_failed: Failed to like
+  article: Article
+  original_deleted: The original post has been deleted
+  load_failed: Failed to load
+  retry: Retry
+  scroll_left: Scroll left
+  scroll_right: Scroll right
+  close: Close

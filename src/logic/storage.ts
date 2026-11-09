@@ -262,10 +262,13 @@ export function isHorizontalCardLayout(layout: GridLayoutType): boolean {
 
 export interface GridLayout {
   home: GridLayoutType
+  /** 动态页瀑布流的列数，窗口不够宽时会自动减少 */
+  moments: number
 }
 
 export const gridLayout = useStorageLocal('gridLayout', ref<GridLayout>({
   home: 'adaptive',
+  moments: 3,
 }), { mergeDefaults: true })
 
 export const sidePanel = useStorageLocal('sidePanel', ref<{

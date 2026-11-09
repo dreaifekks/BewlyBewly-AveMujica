@@ -22,6 +22,28 @@ describe('buildRequest', () => {
     expect(String((fetchOpt as { body?: unknown }).body)).toBe('viewed=false&csrf=token')
   })
 
+  it('likes a moment with a JSON body and csrf in the query, like the bilibili moments page', () => {
+    const { url, fetchOpt } = buildRequest(
+      { contentScriptQuery: 'likeMoment', dyn_id_str: '1268670718664507433', up: 2, csrf: 'token' },
+      FullAPI.likeMoment as API,
+    )
+    expect(url).toBe('https://api.bilibili.com/x/dynamic/feed/dyn/thumb?csrf=token')
+    expect(fetchOpt.headers).toEqual({ 'Content-Type': 'application/json' })
+    expect(JSON.parse(String((fetchOpt as { body?: unknown }).body))).toEqual({
+      dyn_id_str: '1268670718664507433',
+      up: 2,
+      spmid: '333.1365.0.0',
+    })
+  })
+
+  it('leaves empty moments feed params out of the query', () => {
+    const { url } = buildRequest(
+      { contentScriptQuery: 'getMomentsFeed', type: 'video', offset: '', page: 1, host_mid: undefined },
+      FullAPI.getMomentsFeed as API,
+    )
+    expect(url).toBe('https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/all?timezone_offset=-480&type=video&platform=web&page=1&features=itemOpusStyle&web_location=333.1365')
+  })
+
   it('sends GET without a body', () => {
     const { url, fetchOpt } = buildRequest(
       { contentScriptQuery: 'getAllWatchLaterList' },

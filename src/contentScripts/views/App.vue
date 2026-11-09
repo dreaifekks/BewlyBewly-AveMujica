@@ -9,6 +9,7 @@ import { useWebFullscreen } from '~/composables/useWebFullscreen'
 import { BEWLY_API_TOAST, BEWLY_MOUNTED, DRAWER_VIDEO_ENTER_PAGE_FULL, DRAWER_VIDEO_EXIT_PAGE_FULL, IFRAME_PAGE_SWITCH_BEWLY, IFRAME_PAGE_SWITCH_BILI } from '~/constants/globalEvents'
 import { AppPage } from '~/enums/appEnums'
 import { settings } from '~/logic'
+import { runSettingsMigrations } from '~/logic/migrations'
 import type { DockItem } from '~/stores/mainStore'
 import { useMainStore } from '~/stores/mainStore'
 import { useSettingsStore } from '~/stores/settingsStore'
@@ -230,6 +231,7 @@ watch([() => showTopBar.value, () => activatedPage.value], () => {
 
 // Setup necessary settings watchers
 setupNecessarySettingsWatchers()
+runSettingsMigrations()
 
 onMounted(() => {
   window.dispatchEvent(new CustomEvent(BEWLY_MOUNTED))

@@ -537,3 +537,42 @@ watch_later:
 search_bar:
   history_title: 搜索历史
   clear_history: 清空搜索历史
+
+moments:
+  tabs:
+    all: 全部
+    video: 视频
+    dynamic: 动态
+    dynamic_desc: 图文、纯文字和转发
+    article: 文章
+  nouns:
+    all: 动态
+    video: 视频
+    dynamic: 图文动态
+    article: 文章
+  empty: 还没有{type}
+  empty_of_up: '{name} 还没有{type}'
+  all_moments: 全部动态
+  all_following: 全部关注
+  only_show: 只看
+  live: 直播中
+  live_ended: 直播已结束
+  watched: '{count}人看过'
+  enter_live_room: 进直播间
+  only_their_moments: 只看 TA 的动态
+  new_moments: '{count} 条新动态'
+  columns: '{count} 列'
+  window_too_narrow: 窗口不够宽
+  expand: 展开
+  full_text: 查看全文
+  forward: 转发
+  comment: 评论
+  like: 点赞
+  like_failed: 点赞失败
+  article: 文章
+  original_deleted: 原动态已被删除
+  load_failed: 加载失败
+  retry: 重试
+  scroll_left: 向左
+  scroll_right: 向右
+  close: 关闭
