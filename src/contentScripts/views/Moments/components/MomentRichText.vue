@@ -23,7 +23,7 @@ defineProps<{
   </template>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .moment-emoji {
   display: inline-block;
   width: 1.4em;

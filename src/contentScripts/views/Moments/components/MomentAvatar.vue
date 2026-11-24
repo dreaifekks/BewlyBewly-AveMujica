@@ -24,7 +24,7 @@ const src = computed(() => {
   </span>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .moment-avatar {
   position: relative;
   display: inline-grid;

@@ -1,0 +1,65 @@
+/* YouTube-like rounded corners for the bilibili video player */
+html.rounded-video-player {
+  /* 全屏 / 网页全屏 / 小窗保持直角；#bilibili-player 排除各页悬浮预览 */
+  #bilibili-player
+    .bpx-player-container:not(:fullscreen):not([data-screen="full"]):not([data-screen="web"]):not(
+      [data-screen="mini"]
+    ) {
+    /* 容器不裁剪，否则联想面板会被切成一条白线；发光改由 wrap 承担（含宽屏） */
+    overflow: visible;
+    border-radius: 0;
+    box-shadow: none;
+
+    .bpx-player-video-area {
+      border-radius: 12px 12px 0 0;
+      overflow: hidden;
+      /* 合成视频图层的圆角裁剪需要独立渲染表面才抗锯齿 */
+      transform: translateZ(0);
+    }
+
+    /* 没有发送栏时视频区铺满四角；轻量播放器的 class 在容器外层 */
+    &:not(:has(.bpx-player-sending-bar)) .bpx-player-video-area,
+    .bpx-player-light-weight & .bpx-player-video-area {
+      border-radius: 12px;
+    }
+
+    .bpx-player-sending-bar {
+      border-radius: 0 0 12px 12px;
+    }
+  }
+
+  /* 宽屏仍在 wrap 内，阴影照常由 wrap 承担；网页全屏 / 小窗已脱离。不加 transform / overflow:hidden，否则困住 fixed 播放器并裁掉联想面板 */
+  .player-wrap:has(#bilibili-player):not(:has([data-screen="full"], [data-screen="web"], [data-screen="mini"])) {
+    border-radius: 12px;
+    overflow: visible;
+    position: relative;
+    z-index: 2;
+    box-shadow:
+      0 0 8px var(--bpx-box-shadow, #e5e9ef),
+      0 4px 20px rgb(0 0 0 / 14%);
+  }
+
+  /* 深色下原生光晕几乎看不见，用多层白柔光勾边 */
+  &.dark .player-wrap:has(#bilibili-player):not(:has([data-screen="full"], [data-screen="web"], [data-screen="mini"])),
+  &.bili_dark
+    .player-wrap:has(#bilibili-player):not(:has([data-screen="full"], [data-screen="web"], [data-screen="mini"])) {
+    box-shadow:
+      0 0 8px rgb(0 0 0 / 50%),
+      0 4px 20px rgb(0 0 0 / 45%),
+      0 0 4px rgb(255 255 255 / 20%),
+      0 0 14px rgb(255 255 255 / 10%),
+      0 0 30px rgb(255 255 255 / 5%);
+  }
+
+  /* 占位层是方角黑/白底，圆角缺口会露出来。
+     外层占位还带着和容器一样的 0 0 8px 方角阴影，圆角阴影补在 wrap 上之后，这层方角会从圆角底下探出来。 */
+  #bilibili-player-placeholder,
+  #bilibili-player-placeholder-top,
+  #bilibili-player-placeholder-bottom,
+  .bilibili-player-placeholder,
+  .bilibili-player-placeholder-top,
+  .bilibili-player-placeholder-bottom {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}

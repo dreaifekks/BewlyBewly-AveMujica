@@ -2,9 +2,9 @@
   "name": "bewlybewly-avemujica",
   "displayName": "BewlyBewly! Ave Mujica",
   "type": "module",
-  "version": "1.8.36",
+  "version": "1.8.38",
   "private": true,
-  "packageManager": "bun@1.4.4",
+  "packageManager": "bun@1.4.5",
   "description": "Just make a few small changes to your bilibili homepage.",
   "homepage": "https://github.com/dreaifekks/BewlyBewly-AveMujica",
   "scripts": {
@@ -51,7 +51,6 @@
     "pinia": "4.1.0",
     "qrcode.vue": "3.11.0",
     "vue-i18n": "11.4.16",
-    "vue-toastification": "2.0.0-rc.5",
     "vuedraggable": "4.1.0"
   },
   "devDependencies": {
@@ -82,7 +81,6 @@
     "kolorist": "1.8.0",
     "lint-staged": "17.6.0",
     "rimraf": "6.1.3",
-    "sass": "1.105.2",
     "simple-git-hooks": "2.14.0",
     "terser": "5.51.2",
     "tsdown": "0.23.1",

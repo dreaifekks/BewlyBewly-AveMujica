@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useEventListener, useResizeObserver } from '@vueuse/core'
 
+import { SCROLL_LOCK_ATTRIBUTE } from '~/composables/useDocumentScrollLock'
 import type { GridLayoutType } from '~/logic'
 import { fitCardRows } from '~/utils/cardGridFit'
 import { createWheelAxisLock } from '~/utils/wheelAxisLock'
@@ -153,7 +154,7 @@ function canScroll(el: Element, axis: 'x' | 'y', delta: number): boolean {
 const getWheelAxis = createWheelAxisLock()
 useEventListener(window, 'wheel', (event: WheelEvent) => {
   const el = scroller.value
-  if (!el?.isConnected || event.defaultPrevented || event.ctrlKey)
+  if (!el?.isConnected || event.defaultPrevented || event.ctrlKey || document.documentElement.hasAttribute(SCROLL_LOCK_ATTRIBUTE))
     return
 
   const axis = getWheelAxis(event.deltaX, event.deltaY, event.timeStamp)
@@ -227,7 +228,7 @@ const horizontalGridStyle = computed(() => ({
   </template>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
 .grid-adaptive {
   --uno: "grid 2xl:cols-5 xl:cols-4 lg:cols-3 md:cols-2 sm:cols-1 cols-1 gap-5";
 }
@@ -249,7 +250,7 @@ const horizontalGridStyle = computed(() => ({
 }
 
 .horizontal-scroller {
-  // 顶栏 + 首页标签栏和它下方的间距，再留一点底边
+  /* Top bar + home tabs bar and spacing below it, with bottom margin */
   height: calc(100vh - var(--bew-top-bar-height) - 74px);
   box-sizing: content-box;
   overflow-x: auto;
@@ -263,15 +264,13 @@ const horizontalGridStyle = computed(() => ({
   align-items: start;
   height: 100%;
 
-  // 卡片是插槽内容，要用 :deep 才能选中
-  > :deep(*) {
+  & > :deep(*) {
     zoom: var(--card-scale);
-    // 卡片根元素的过渡没写属性，默认是 all，缩放也会被做成动画。只保留悬停效果用到的属性
     transition-property: background-color, box-shadow;
   }
 
-  :deep([data-measuring]),
-  :deep([data-measuring] *) {
+  & :deep([data-measuring]),
+  & :deep([data-measuring] *) {
     content-visibility: visible !important;
   }
 }

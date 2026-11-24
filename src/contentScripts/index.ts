@@ -1,12 +1,15 @@
 import '~/styles'
 import 'uno.css'
 
+import { createPinia, setActivePinia } from 'pinia'
 import { createApp } from 'vue'
 
 import { useDark } from '~/composables/useDark'
+import { SCROLL_LOCK_ATTRIBUTE } from '~/composables/useDocumentScrollLock'
 import { BEWLY_MOUNTED } from '~/constants/globalEvents'
 import { settings } from '~/logic'
 import { setupApp } from '~/logic/common-setup'
+import { useWallpaperStore } from '~/stores/wallpaperStore'
 import BEWLY_CSS from '~/styles/bewly.css?raw'
 import RESET_BEWLY_CSS from '~/styles/reset.css?raw'
 import { syncAccessKey } from '~/utils/authProvider'
@@ -17,7 +20,11 @@ import { SVG_ICONS } from '~/utils/svgIcons'
 
 import { version } from '../../package.json'
 import { setupBiliTranslation } from './biliTranslation'
+import { setupFonts } from './fonts'
 import App from './views/App.vue'
+
+const pinia = createPinia()
+setActivePinia(pinia)
 
 const isFirefox: boolean = /Firefox/i.test(navigator.userAgent)
 
@@ -137,6 +144,20 @@ let beforeLoadedStyleEl: HTMLStyleElement | undefined
 
 const isStylesOnlyPage = isFansMedalWallPage()
 
+if (isSupportedPages() || isSupportedIframePages())
+  settings.ready.then(setupFonts)
+
+function preloadWallpapers() {
+  if (!isHomePage() && !(isVideoOrBangumiPage() && settings.value.showVideoPageBackground))
+    return
+  const wallpaper = useWallpaperStore()
+  wallpaper.resolve(settings.value.wallpaper)
+  wallpaper.resolve(settings.value.searchPageWallpaper)
+}
+
+if (isSupportedPages())
+  settings.ready.then(preloadWallpapers)
+
 if (isSupportedPages() || isSupportedIframePages() || isStylesOnlyPage) {
   if (settings.value.adaptToOtherPageStyles)
     useDark()
@@ -208,6 +229,10 @@ async function onDOMLoaded() {
         .bili-header {
           position: fixed !important;
           inset: 0 0 auto;
+          z-index: 1001 !important;
+        }
+        .remove-top-bar .bili-header {
+          visibility: hidden !important;
         }
         .bili-header .bili-header__bar {
           position: fixed !important;
@@ -255,7 +280,13 @@ async function onDOMLoaded() {
 
 async function initBodyOverlayScrollbars() {
   const { OverlayScrollbars } = await import('overlayscrollbars')
-  OverlayScrollbars(document.body, {})
+  const instance = OverlayScrollbars(document.body, {})
+  const root = document.documentElement
+  const syncScrollbarVisibility = () => instance.options({
+    scrollbars: { visibility: root.hasAttribute(SCROLL_LOCK_ATTRIBUTE) ? 'hidden' : 'auto' },
+  })
+  new MutationObserver(syncScrollbarVisibility).observe(root, { attributeFilter: [SCROLL_LOCK_ATTRIBUTE] })
+  syncScrollbarVisibility()
 }
 
 if (document.readyState !== 'loading')
@@ -307,7 +338,7 @@ function injectApp() {
   const styleEl = document.createElement('link')
   // Fix #69 https://github.com/hakadao/BewlyBewly/issues/69
   // https://medium.com/@emilio_martinez/shadow-dom-open-vs-closed-1a8cf286088a - open shadow dom
-  const shadowDOM = container.attachShadow?.({ mode: 'open' }) || container
+  const shadowDOM = container.attachShadow({ mode: 'open' })
   const resetStyleEl = document.createElement('style')
   resetStyleEl.textContent = `${RESET_BEWLY_CSS}`
   const bewlyStyleEl = document.createElement('style')
@@ -353,7 +384,7 @@ function injectApp() {
   document.body.appendChild(container)
 
   const app = createApp(App)
-  setupApp(app)
+  setupApp(app, pinia)
   app.mount(root)
 }
 
@@ -477,7 +508,6 @@ export function injectBottomCommentStyle() {
       div.bili-comments-bottom-fixed-wrapper > div {
         background-color: rgba(255, 255, 255, 0) !important;
         backdrop-filter: blur(12px) saturate(120%);
-        -webkit-backdrop-filter: blur(12px) saturate(120%);
         border-top-color: rgba(255, 255, 255, 0.22) !important;
       }
     `

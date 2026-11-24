@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import QRCodeVue from 'qrcode.vue'
-import { useToast } from 'vue-toastification'
 import draggable from 'vuedraggable'
 
 import Radio from '~/components/Radio.vue'
+import { useToast } from '~/composables/useToast'
 import { accessKey, settings } from '~/logic'
 import { useMainStore } from '~/stores/mainStore'
 import { setCurrentMobileCredential } from '~/utils/accountManager'
@@ -102,9 +102,8 @@ function pollLoginQRCode() {
   }, 3000)
 }
 
-function handleCloseQRCodeDialog() {
+function stopPollingLoginQRCode() {
   clearInterval(pollLoginQRCodeInterval.value)
-  showQRCodeDialog.value = false
 }
 
 function handleExport(filterType: 'title' | 'user') {
@@ -247,14 +246,11 @@ function handleToggleHomeTab(tab: any) {
         </div>
       </SettingsItem>
 
-      <Dialog
-        v-if="showQRCodeDialog"
-        width="50%"
-        max-width="800px"
-        append-to-bewly-body
-        :show-footer="false"
-        :title="$t('settings.authorize_app')" center
-        @close="handleCloseQRCodeDialog"
+      <DialogBox
+        v-model:open="showQRCodeDialog"
+        width="min(50%, 800px)"
+        :title="$t('settings.authorize_app')"
+        @close="stopPollingLoginQRCode"
       >
         <div flex="~ col gap-4 items-center">
           <div>
@@ -282,7 +278,7 @@ function handleToggleHomeTab(tab: any) {
             {{ $t('common.operation.refresh') }}
           </Button>
         </div>
-      </Dialog>
+      </DialogBox>
     </SettingsItemGroup>
 
     <SettingsItemGroup
@@ -464,22 +460,20 @@ function handleToggleHomeTab(tab: any) {
             {{ $t('settings.btn.open_settings') }}
           </Button>
 
-          <Dialog
+          <DialogBox
             v-if="showSearchPageModeSharedSettings"
-            width="80%"
-            max-width="900px"
-            content-height="64vh"
-            :show-footer="false"
+            open
+            width="min(80%, 900px)"
+            body-height="64vh"
             :title="$t('settings.settings_shared_with_the_search_page')"
-            append-to-bewly-body
-            @close="showSearchPageModeSharedSettings = false"
+            @closed="showSearchPageModeSharedSettings = false"
           >
             <template #desc>
               <span color="$bew-warning-color">{{ $t('settings.settings_shared_with_the_search_page_desc') }}</span>
             </template>
 
             <SearchPage />
-          </Dialog>
+          </DialogBox>
         </SettingsItem>
 
         <SettingsItem :title="$t('settings.search_page_mode_wallpaper_fixed')">
@@ -490,13 +484,13 @@ function handleToggleHomeTab(tab: any) {
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
 .unrestricted-width-settings-item {
-  :deep(.left-content) {
+  & :deep(.left-content) {
     --uno: w-full;
   }
 
-  :deep(.right-content) {
+  & :deep(.right-content) {
     --uno: w-auto;
   }
 }

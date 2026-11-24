@@ -3,12 +3,14 @@ import type { Ref } from 'vue'
 
 import Empty from '~/components/Empty.vue'
 import Loading from '~/components/Loading.vue'
+import { useSessionStore } from '~/stores/sessionStore'
 import api from '~/utils/api'
 import { calcCurrentTime } from '~/utils/dataFormatter'
-import { getUserID, removeHttpFromUrl, scrollToTop } from '~/utils/main'
+import { removeHttpFromUrl, scrollToTop } from '~/utils/main'
 
 import type { FavoriteCategory, FavoriteResource } from '../types'
 
+const session = useSessionStore()
 const favoriteCategories = reactive<Array<FavoriteCategory>>([])
 const favoriteResources = reactive<Array<FavoriteResource>>([])
 
@@ -22,7 +24,7 @@ const noMoreContent = ref<boolean>(false)
 const favoriteVideosWrap = ref<HTMLElement>() as Ref<HTMLElement>
 
 const viewAllUrl = computed((): string => {
-  return `//space.bilibili.com/${getUserID()}/favlist?fid=${
+  return `//space.bilibili.com/${session.userID ?? ''}/favlist?fid=${
     activatedMediaId.value
   }&ftype=create`
 })
@@ -74,7 +76,7 @@ async function initData() {
 
 async function getFavoriteCategories() {
   await api.favorite.getFavoriteCategories({
-    up_mid: getUserID(),
+    up_mid: session.userID?.toString() ?? '',
   })
     .then((res) => {
       if (res.code === 0) {
@@ -181,7 +183,7 @@ defineExpose({
     <main flex="~" h="[calc(100%-50px)]" rounded="$bew-radius">
       <aside
         pos="sticky top-50px left-0"
-        w="140px" h-full overflow="y-auto"
+        w="140px" h-full overflow="y-auto" overscroll="contain"
         flex="shrink-0" bg="$bew-fill-1"
       >
         <ul grid="~ cols-1">
@@ -203,7 +205,7 @@ defineExpose({
       <div
         ref="favoriteVideosWrap"
         flex="~ col gap-2 1"
-        overflow="y-auto"
+        overflow="y-auto" overscroll="contain"
         p="x-4"
         pos="relative"
         h-full
@@ -299,7 +301,7 @@ defineExpose({
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
 .activated-category {
   --uno: "bg-$bew-theme-color text-white";
 }

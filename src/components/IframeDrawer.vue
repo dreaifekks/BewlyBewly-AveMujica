@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onKeyStroke, useEventListener } from '@vueuse/core'
 
+import { useDocumentScrollLock } from '~/composables/useDocumentScrollLock'
 import { DRAWER_VIDEO_ENTER_PAGE_FULL, DRAWER_VIDEO_EXIT_PAGE_FULL } from '~/constants/globalEvents'
 import { settings } from '~/logic'
 import { isHomePage, isInIframe } from '~/utils/main'
@@ -17,6 +18,7 @@ const emit = defineEmits<{
 }>()
 
 const show = ref(false)
+useDocumentScrollLock(show)
 const headerShow = ref(false)
 const iframeRef = ref<HTMLIFrameElement | null>(null)
 const currentUrl = ref<string>(props.url)
@@ -289,7 +291,7 @@ watchEffect(() => {
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
 .drawer-enter-active,
 .drawer-leave-active {
   transition: transform 0.3s;

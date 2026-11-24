@@ -7,7 +7,10 @@ vi.mock('webextension-polyfill', () => {
     runtime: { id: 'test-extension-id' },
     storage: {
       local: {
-        get: async (key: string) => ({ [key]: store.get(key) }),
+        get: async (keys: string | string[]) => {
+          const list = Array.isArray(keys) ? keys : [keys]
+          return Object.fromEntries(list.map(key => [key, store.get(key)]))
+        },
         set: async (items: Record<string, string>) => {
           for (const [k, v] of Object.entries(items))
             store.set(k, v)

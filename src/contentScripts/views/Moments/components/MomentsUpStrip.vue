@@ -215,7 +215,7 @@ function onlyTheirMoments(mid: string) {
   </section>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .up-strip {
   position: relative;
   margin-bottom: 16px;
@@ -249,10 +249,6 @@ function onlyTheirMoments(mid: string) {
   padding: 14px 10px 10px;
   overflow-x: auto;
   scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
 }
 
 .up-item {

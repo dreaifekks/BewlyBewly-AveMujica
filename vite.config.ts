@@ -47,6 +47,7 @@ export const sharedConfig: UserConfig = {
     replace({
       '__DEV__': JSON.stringify(isDev),
       '__RELEASE_TAG__': JSON.stringify(releaseTag),
+      '__TARGET_BROWSER__': JSON.stringify(isFirefox ? 'firefox' : isSafari ? 'safari' : 'chrome'),
       'process.env.NODE_ENV': JSON.stringify(isDev ? 'development' : 'production'),
       '__VUE_OPTIONS_API__': JSON.stringify(true),
       '__VUE_PROD_DEVTOOLS__': JSON.stringify(false),
@@ -82,6 +83,7 @@ export default defineConfig({
     outDir: r(isFirefox ? 'extension-firefox/dist' : isSafari ? 'extension-safari/dist' : 'extension/dist'),
     emptyOutDir: false,
     sourcemap: false, // https://github.com/vitejs/vite-plugin-vue/issues/35
+    target: ['chrome140', 'firefox145', 'safari18.4'],
     // https://developer.chrome.com/docs/webstore/program_policies/#:~:text=Code%20Readability%20Requirements
     terserOptions: {
       mangle: false,

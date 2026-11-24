@@ -6,13 +6,6 @@ import ChangeWallpaper from '../../components/ChangeWallpaper.vue'
 import SettingsItem from '../../components/SettingsItem.vue'
 import SettingsItemGroup from '../../components/SettingsItemGroup.vue'
 
-watch(() => settings.value.individuallySetSearchPageWallpaper, (newValue) => {
-  if (newValue)
-    document.documentElement.style.backgroundImage = `url(${settings.value.searchPageWallpaper})`
-  else
-    document.documentElement.style.backgroundImage = `url(${settings.value.wallpaper})`
-})
-
 function changeSearchBarFocusCharacter(url: string) {
   settings.value.searchPageSearchBarFocusCharacter = url
 }
@@ -104,7 +97,7 @@ function changeSearchBarFocusCharacter(url: string) {
   </div>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .selected-wallpaper {
   --uno: "border-$bew-theme-color-60";
 }

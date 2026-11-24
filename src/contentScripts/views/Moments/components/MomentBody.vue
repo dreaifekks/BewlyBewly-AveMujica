@@ -144,7 +144,7 @@ const showFullTextLink = computed(() => !props.nested && props.entry.textTruncat
   </div>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .opus-title {
   margin-bottom: 6px;
   font-size: 15.5px;

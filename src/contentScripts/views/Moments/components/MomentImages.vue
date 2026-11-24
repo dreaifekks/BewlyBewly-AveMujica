@@ -38,7 +38,7 @@ const singleRatio = computed(() => single.value ? singleImageRatio(single.value)
   </div>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .moment-images {
   display: grid;
   gap: 4px;

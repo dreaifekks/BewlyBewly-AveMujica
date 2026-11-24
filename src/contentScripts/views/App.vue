@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useEventListener, useThrottleFn, useToggle } from '@vueuse/core'
 import type { Ref } from 'vue'
-import { useToast } from 'vue-toastification'
 
 import type { BewlyAppProvider } from '~/composables/useAppProvider'
 import { useDark } from '~/composables/useDark'
+import { useToast } from '~/composables/useToast'
 import { useWebFullscreen } from '~/composables/useWebFullscreen'
 import { BEWLY_API_TOAST, BEWLY_MOUNTED, DRAWER_VIDEO_ENTER_PAGE_FULL, DRAWER_VIDEO_EXIT_PAGE_FULL, IFRAME_PAGE_SWITCH_BEWLY, IFRAME_PAGE_SWITCH_BILI } from '~/constants/globalEvents'
 import { AppPage } from '~/enums/appEnums'
@@ -224,7 +224,7 @@ watch([() => showTopBar.value, () => activatedPage.value], () => {
       biliHeader.style.visibility = 'hidden'
     }
     else {
-      biliHeader.style.visibility = 'visible'
+      biliHeader.style.removeProperty('visibility')
     }
   }
 }, { immediate: true })
@@ -378,102 +378,6 @@ document.querySelectorAll('link[rel="stylesheet"]').forEach((el) => {
   if (link.href.includes('regular.css') || link.href.includes('medium.css'))
     link.remove()
 })
-
-/* Add 'BewlyInternalResource' suffix to prevent conflict with local fonts. */
-const fontStyles = document.createElement('style')
-fontStyles.textContent = `
-@font-face {
-    font-family: "EmDashFont"; /* U+2014 */
-    unicode-range: U+2014;
-    src: local(Tahoma), local(Arial);
-}
-
-@font-face {
-    font-family: "MiddleDotFont"; /* U+00B7 */
-    unicode-range: U+00B7;
-    font-feature-settings: "hwid" on;
-    src: url(${browser.runtime.getURL('/assets/fonts/EliksiroSans-VF.woff2')}) format(woff2) tech(variations);
-}
-
-@font-face {
-    font-family: "OldRoboto-BewlyInternalResource"; /* Roboto Regular (400) */
-    font-weight: normal;
-    font-style: normal;
-    font-feature-settings: "liga" off, "ss01" on, "ss02" on, "ss04" on;
-    src: url(${browser.runtime.getURL('/assets/fonts/Roboto-Regular.woff2')}) format(woff2);
-}
-
-@font-face {
-    font-family: "OldRoboto-BewlyInternalResource"; /* Roboto Medium (500) */
-    font-weight: 500;
-    font-style: normal;
-    font-feature-settings: "liga" off, "ss01" on, "ss02" on, "ss04" on;
-    src: url(${browser.runtime.getURL('/assets/fonts/Roboto-Medium.woff2')}) format(woff2);
-}
-
-@font-face {
-    font-family: "OldRoboto-BewlyInternalResource"; /* Roboto Medium, treat as SemiBold (600) */
-    font-weight: 600;
-    font-style: normal;
-    font-feature-settings: "liga" off, "ss01" on, "ss02" on, "ss04" on;
-    src: url(${browser.runtime.getURL('/assets/fonts/Roboto-Medium.woff2')}) format(woff2);
-}
-
-@font-face {
-    font-family: "OldRoboto-BewlyInternalResource"; /* Roboto Bold (700) */
-    font-weight: bold;
-    font-style: normal;
-    font-feature-settings: "liga" off, "ss01" on, "ss02" on, "ss04" on;
-    src: url(${browser.runtime.getURL('/assets/fonts/Roboto-Bold.woff2')}) format(woff2);
-}
-
-@font-face {
-    font-family: "OldRoboto-BewlyInternalResource"; /* Roboto Italic Regular (400) */
-    font-weight: normal;
-    font-style: italic;
-    font-feature-settings: "liga" off, "ss02" on, "ss04" on;
-    src: url(${browser.runtime.getURL('/assets/fonts/Roboto-Italic.woff2')}) format(woff2);
-}
-
-@font-face {
-    font-family: "OldRoboto-BewlyInternalResource"; /* Roboto Italic Medium (500) */
-    font-weight: 500;
-    font-style: italic;
-    font-feature-settings: "liga" off, "ss02" on, "ss04" on;
-    src: url(${browser.runtime.getURL('/assets/fonts/Roboto-MediumItalic.woff2')}) format(woff2);
-}
-
-@font-face {
-    font-family: "OldRoboto-BewlyInternalResource"; /* Roboto Italic Medium, treat as SemiBold (600) */
-    font-weight: 600;
-    font-style: italic;
-    font-feature-settings: "liga" off, "ss02" on, "ss04" on;
-    src: url(${browser.runtime.getURL('/assets/fonts/Roboto-MediumItalic.woff2')}) format(woff2);
-}
-
-@font-face {
-    font-family: "OldRoboto-BewlyInternalResource"; /* Roboto Italic Bold (700) */
-    font-weight: bold;
-    font-style: italic;
-    font-feature-settings: "liga" off, "ss02" on, "ss04" on;
-    src: url(${browser.runtime.getURL('/assets/fonts/Roboto-BoldItalic.woff2')}) format(woff2);
-}
-
-@font-face {
-    font-family: "ShangguSansSCVF-BewlyInternalResource"; /* Chinese characters old form */
-    font-weight: 250 900;
-    src: url(${browser.runtime.getURL('/assets/fonts/ShangguSansSC-VF.woff2')}) format(woff2) tech(variations);
-}
-
-@font-face {
-    font-family: "EliksiroSans-BewlyInternalResource"; /* Chinese characters modern form */
-    font-weight: 100 700;
-    font-feature-settings: "ss11" on;
-    src: url(${browser.runtime.getURL('/assets/fonts/EliksiroSans-VF.woff2')}) format(woff2) tech(variations);
-}
-`
-
-document.head.appendChild(fontStyles)
 
 if (settings.value.legacyPlayerLoadingScreen) {
   const legacyPlayerLoadingScreen = document.createElement('style')
@@ -671,13 +575,15 @@ document.head.appendChild(removeLeftQuoteIndent)
       :url="iframeDrawerURL"
       @close="showIframeDrawer = false"
     />
+
+    <ToastRegion />
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
 .bewly-wrapper {
-  // To fix the filter used in `.bewly-wrapper` that cause the positions of elements become discorded.
-  > * > * {
+  /* To fix the filter used in `.bewly-wrapper` that cause the positions of elements become discorded. */
+  & > * > * {
     filter: var(--bew-filter-force-dark);
   }
 }

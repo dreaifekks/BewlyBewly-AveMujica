@@ -1,23 +1,23 @@
 <script setup lang="ts">
 import DOMPurify from 'dompurify'
 import { useI18n } from 'vue-i18n'
-import { useToast } from 'vue-toastification'
 
+import { useToast } from '~/composables/useToast'
 import { accessKey, settings } from '~/logic'
+import type { UserInfo } from '~/models/user/userInfo'
+import { useSessionStore } from '~/stores/sessionStore'
 import type { AccountListResult, PublicAccountProfile } from '~/types/accountManager'
 import {
   registerCurrentAccount,
-  removeAccount,
   startAddAccount,
   switchAccount,
 } from '~/utils/accountManager'
 import api from '~/utils/api'
-import { revokeAccessKey } from '~/utils/authProvider'
 import { numFormatter } from '~/utils/dataFormatter'
 import { LV0_ICON, LV1_ICON, LV2_ICON, LV3_ICON, LV4_ICON, LV5_ICON, LV6_ICON, LV6_LIGHTNING_ICON } from '~/utils/lvIcons'
-import { getCSRF, getUserID, isHomePage, removeHttpFromUrl } from '~/utils/main'
+import { isHomePage, removeHttpFromUrl } from '~/utils/main'
 
-import type { UserInfo, UserStat } from '../types'
+import type { UserStat } from '../types'
 
 const props = defineProps<{
   userInfo: UserInfo
@@ -25,6 +25,7 @@ const props = defineProps<{
 
 const { t } = useI18n()
 const toast = useToast()
+const session = useSessionStore()
 
 const accountState = ref<AccountListResult | null>(null)
 const accountSwitcherOpen = ref(false)
@@ -35,9 +36,7 @@ const addingAccount = ref(false)
 const accounts = computed(() => accountState.value?.accounts ?? [])
 const currentAccount = computed(() => accounts.value.find(account => account.current) ?? null)
 
-const mid = computed(() => {
-  return getUserID()
-})
+const mid = computed(() => props.userInfo.mid)
 
 const otherLinks = computed((): { name: string, url: string, icon: string }[] => {
   return [
@@ -104,20 +103,8 @@ onMounted(() => {
 })
 
 async function logout() {
-  const uid = String(props.userInfo.mid || getUserID())
-  await revokeAccessKey().catch((error) => {
-    console.error('[AccountManager] Failed to clear the current mobile token:', error)
-  })
-  api.auth.logout({
-    biliCSRF: getCSRF(),
-  }).then(async () => {
-    if (uid) {
-      await removeAccount(uid).catch((error) => {
-        console.error('[AccountManager] Failed to remove the logged-out account:', error)
-      })
-    }
-    location.reload()
-  })
+  await session.logout()
+  location.reload()
 }
 
 async function refreshAccounts() {
@@ -173,8 +160,11 @@ async function handleAddAccount() {
   addingAccount.value = true
   try {
     const result = await startAddAccount()
-    if (result.currentSessionCleared)
+    if (result.currentSessionCleared) {
       accessKey.value = ''
+      session.userInfo = undefined
+      session.status = 'loggedOut'
+    }
   }
   catch (error) {
     toast.error(t('topbar.user_dropdown.add_account_failed', {
@@ -516,7 +506,7 @@ function handleClickChannel() {
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
 .account-switcher {
   overflow: hidden;
 }
@@ -550,9 +540,9 @@ function handleClickChannel() {
   border-top: 1px solid var(--bew-border-color);
 }
 
-// 账号多时只让列表自己滚动，避免把面板里原有的入口挤出可视范围
 .account-rows {
   --uno: "max-h-190px overflow-y-auto";
+  overscroll-behavior: contain;
   scrollbar-width: thin;
 }
 
@@ -625,7 +615,6 @@ function handleClickChannel() {
   opacity: 0;
   transform: translateY(-6px) scaleY(0.96);
 }
-
 .level :deep(svg) {
   --uno: "w-25px h-16px";
 }
@@ -639,7 +628,7 @@ function handleClickChannel() {
   --uno: "bg-$bew-fill-alt hover:bg-$bew-fill-2";
   --uno: "shadow-[var(--bew-shadow-edge-glow-1),var(--bew-shadow-1)]";
 
-  > * {
+  & > * {
     --uno: "transition-all duration-300";
   }
 

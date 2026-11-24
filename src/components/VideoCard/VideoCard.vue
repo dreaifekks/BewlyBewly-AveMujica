@@ -2,16 +2,17 @@
 import { Icon } from '@iconify/vue'
 import type { CSSProperties } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useToast } from 'vue-toastification'
 
 import Button from '~/components/Button.vue'
 import { useBewlyApp } from '~/composables/useAppProvider'
+import { useToast } from '~/composables/useToast'
 import { accessKey, settings } from '~/logic'
 import type { VideoInfo } from '~/models/video/videoInfo'
 import type { VideoPreviewResult } from '~/models/video/videoPreview'
 import { useMainStore } from '~/stores/mainStore'
 import api from '~/utils/api'
 import { getTvSign, TVAppKey } from '~/utils/authProvider'
+import { skippableContentStyle } from '~/utils/contentVisibility'
 import { calcCurrentTime, calcTimeSince, numFormatter } from '~/utils/dataFormatter'
 import { getCSRF, removeHttpFromUrl } from '~/utils/main'
 
@@ -297,7 +298,7 @@ provide('getVideoType', () => props.type!)
 <template>
   <div
     class="video-card-root"
-    content-visibility="auto"
+    :style="skippableContentStyle"
     intrinsic-size-300px
     duration-300 ease-in-out
     rounded="$bew-radius"
@@ -610,7 +611,7 @@ provide('getVideoType', () => props.type!)
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
 .horizontal-card-cover {
   --uno: "xl:w-280px lg:w-250px md:w-200px w-200px";
 }

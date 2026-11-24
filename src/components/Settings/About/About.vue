@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import browser from 'webextension-polyfill'
 
-import { originalSettings, settings } from '~/logic'
+import { inlineLocalWallpapers, originalSettings, pruneLocalWallpapers, settings, storeInlineWallpapers } from '~/logic'
 import { isNewerRelease } from '~/utils/releaseTag'
 
 import { version } from '../../../../package.json'
@@ -36,16 +36,17 @@ function handleImportSettings() {
         input.value = ''
 
         const reader = new FileReader()
-        reader.onload = (event: Event) => {
+        reader.onload = async (event: Event) => {
           const fileReaderTarget = event.target as FileReader
           const fileContent = fileReaderTarget.result as string
-          const jsonObject = JSON.parse(fileContent) as any
+          const jsonObject = await storeInlineWallpapers(JSON.parse(fileContent)) as any
 
           // Merge the new settings with the existing settings
           Object.keys(jsonObject).forEach((key) => {
             if (key in settings.value)
               (settings.value as any)[key] = jsonObject[key]
           })
+          pruneLocalWallpapers(settings.value)
 
           importSettingsRef.value?.removeEventListener('change', handleChange)
         }
@@ -57,8 +58,8 @@ function handleImportSettings() {
   }
 }
 
-function handleExportSettings() {
-  const jsonStr = JSON.stringify(settings.value)
+async function handleExportSettings() {
+  const jsonStr = JSON.stringify(await inlineLocalWallpapers(settings.value))
   const blob = new Blob([jsonStr], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -76,6 +77,7 @@ function handleResetSettings() {
     // Remember the last selected language when resetting settings
     originalSettings.language = settings.value.language
     settings.value = { ...originalSettings }
+    pruneLocalWallpapers(settings.value)
   }
 }
 
@@ -231,19 +233,15 @@ async function checkGitHubRelease() {
           哔哩哔哩私有API使用声明
         </Button>
 
-        <Dialog
+        <DialogBox
           v-if="dialogVisible.bilibiliPrivateAPIUsage"
-          width="90%"
-          max-width="740px"
-          content-height="70vh"
-          content-max-height="700px"
-          append-to-bewly-body
-          @close="dialogVisible.bilibiliPrivateAPIUsage = false"
+          open
+          width="min(90%, 740px)"
+          body-height="min(70vh, 700px)"
+          @closed="dialogVisible.bilibiliPrivateAPIUsage = false"
         >
           <template #title>
-            <div text-xl font-bold>
-              哔哩哔哩私有API使用声明
-            </div>
+            哔哩哔哩私有API使用声明
           </template>
 
           <div>
@@ -267,13 +265,13 @@ async function checkGitHubRelease() {
               若阁下无法理解或不同意上述声明，请从浏览器中移除本扩展。
             </p>
           </div>
-        </Dialog>
+        </DialogBox>
       </section>
     </div>
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
 .btn {
   --b-button-color: var(--bew-fill-1);
   --b-button-color-hover: var(--bew-fill-2);

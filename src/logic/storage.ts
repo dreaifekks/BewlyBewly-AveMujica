@@ -4,6 +4,8 @@ import type { HomeSubPage } from '~/contentScripts/views/Home/types'
 import type { AppPage } from '~/enums/appEnums'
 import type { BiliTranslationSetting } from '~/utils/biliTranslation'
 
+import { migrateInlineWallpapers } from './wallpaper'
+
 export const storageDemo = useStorageLocal('webext-demo', 'Storage Demo')
 export const accessKey = ref('')
 
@@ -54,7 +56,7 @@ export interface Settings {
   disableDockGlowingEffect: boolean
   disableLightDarkModeSwitcherOnDock: boolean
   backToTopAndRefreshButtonsAreSeparated: boolean
-  enableUndoRefreshButton: boolean // 添加撤销刷新按钮配置项
+  enableUndoRefreshButton: boolean
 
   sidebarPosition: 'left' | 'right'
   autoHideSidebar: boolean
@@ -175,7 +177,7 @@ export const originalSettings: Settings = {
   disableDockGlowingEffect: false,
   disableLightDarkModeSwitcherOnDock: false,
   backToTopAndRefreshButtonsAreSeparated: true,
-  enableUndoRefreshButton: false,
+  enableUndoRefreshButton: true,
 
   sidebarPosition: 'right',
   autoHideSidebar: false,
@@ -251,7 +253,7 @@ export const originalSettings: Settings = {
   legacyPlayerLoadingScreen: false,
 }
 
-export const settings = useStorageLocal('settings', ref<Settings>(originalSettings), { mergeDefaults: true })
+export const settings = useStorageLocal('settings', ref<Settings>(originalSettings), { mergeDefaults: true, migrate: migrateInlineWallpapers })
 
 export type GridLayoutType = 'adaptive' | 'twoColumns' | 'oneColumn' | 'horizontalScroll'
 

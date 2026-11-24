@@ -6,12 +6,15 @@ import { TOP_BAR_VISIBILITY_CHANGE } from '~/constants/globalEvents'
 import { gridLayout, settings } from '~/logic'
 import type { HomeTab } from '~/stores/mainStore'
 import { useMainStore } from '~/stores/mainStore'
+import { useWallpaperStore } from '~/stores/wallpaperStore'
 import emitter from '~/utils/mitt'
 
 import type { GridLayoutIcon } from './types'
 import { HomeSubPage } from './types'
 
 const mainStore = useMainStore()
+const wallpaper = useWallpaperStore()
+const searchPageWallpaperUrl = computed(() => wallpaper.resolve(settings.value.searchPageWallpaper))
 const { handleBackToTop } = useBewlyApp()
 const handleThrottledBackToTop = useThrottleFn((targetScrollTop: number = 0) => handleBackToTop(targetScrollTop), 1000, false)
 
@@ -148,7 +151,7 @@ function toggleTabContentLoading(loading: boolean) {
           pos="absolute left-0 top-0" w-full h-inherit bg="cover center" z-1
           pointer-events-none
           :style="{
-            backgroundImage: `url('${settings.searchPageWallpaper}')`,
+            backgroundImage: `url('${searchPageWallpaperUrl}')`,
             backgroundAttachment: settings.searchPageModeWallpaperFixed ? 'fixed' : 'unset',
           }"
         />
@@ -282,7 +285,7 @@ function toggleTabContentLoading(loading: boolean) {
   </div>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .bg-enter-active,
 .bg-leave-active {
   --uno: "duration-1000 ease-in-out";
@@ -312,10 +315,10 @@ function toggleTabContentLoading(loading: boolean) {
 }
 
 .home-tabs-inside {
-  :deep([data-overlayscrollbars-contents]) {
+  & :deep([data-overlayscrollbars-contents]) {
     --uno: "flex items-center gap-1 h-inherit rounded-$bew-radius-half";
   }
-  :deep(.os-scrollbar) {
+  & :deep(.os-scrollbar) {
     --uno: "mb--4px";
   }
 }

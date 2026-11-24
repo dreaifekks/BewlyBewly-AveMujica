@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { useToast } from 'vue-toastification'
 
+import { useToast } from '~/composables/useToast'
 import api from '~/utils/api'
 import { numFormatter } from '~/utils/dataFormatter'
 import { getCSRF } from '~/utils/main'
@@ -102,7 +102,7 @@ async function toggleWatchLater() {
   </ALink>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .moment-video {
   display: block;
   color: inherit;

@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 
+import { useSessionStore } from '~/stores/sessionStore'
 import { useSettingsStore } from '~/stores/settingsStore'
-import { getUserID } from '~/utils/main'
 
 const { t } = useI18n()
+const session = useSessionStore()
 const settingsStore = useSettingsStore()
 
 const list = computed((): { name: string, url: string, icon: string }[] => [
   { name: t('topbar.notifications'), url: '//message.bilibili.com', icon: 'i-mingcute:notification-line' },
   { name: t('topbar.moments'), url: settingsStore.momentsPageUrl, icon: 'i-tabler:windmill' },
-  { name: t('topbar.favorites'), url: `//space.bilibili.com/${getUserID() ?? ''}/favlist`, icon: 'i-mingcute:star-line' },
+  { name: t('topbar.favorites'), url: `//space.bilibili.com/${session.userID ?? ''}/favlist`, icon: 'i-mingcute:star-line' },
   { name: t('topbar.history'), url: '//www.bilibili.com/history', icon: 'i-mingcute:time-line' },
   { name: t('topbar.watch_later'), url: '//www.bilibili.com/watchlater/#/list', icon: 'i-mingcute:carplay-line' },
   { name: t('topbar.creative_center'), url: '//member.bilibili.com/platform/home', icon: 'i-mingcute:bulb-line' },

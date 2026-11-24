@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { useToast } from 'vue-toastification'
 
+import { useToast } from '~/composables/useToast'
 import api from '~/utils/api'
 import { numFormatter } from '~/utils/dataFormatter'
 import { getCSRF } from '~/utils/main'
@@ -113,7 +113,7 @@ async function toggleLike() {
   </article>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .moment-card {
   position: relative;
   padding: 14px 16px 6px;

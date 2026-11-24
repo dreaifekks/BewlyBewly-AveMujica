@@ -2,6 +2,7 @@
 import { useEventListener } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 
+import { useDocumentScrollLock } from '~/composables/useDocumentScrollLock'
 import { settings } from '~/logic'
 import { createTransformer } from '~/utils/transformer'
 
@@ -11,6 +12,8 @@ import { MenuType } from './types'
 const emit = defineEmits(['close'])
 
 const { t } = useI18n()
+
+useDocumentScrollLock()
 
 const settingsMenu = {
   [MenuType.General]: defineAsyncComponent(() => import('./General/General.vue')),
@@ -223,7 +226,6 @@ function setCurrentTitle() {
             pos="absolute top-0 left-0" w-inherit h-inherit pointer-events-none
             style="
               mask-image: linear-gradient(to bottom,  black 0, transparent 100%);
-              -webkit-mask-image: linear-gradient(to bottom, black 0, transparent 100%);
               backdrop-filter: blur(6px);
             "
             z--1 rounded-inherit transform-gpu
@@ -250,7 +252,6 @@ function setCurrentTitle() {
           ref="scrollbarRef"
           style="
             mask-image: linear-gradient(to bottom, transparent 0%, black 80px 30%);
-            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 80px 30%);
           "
           element="div" defer
           h-inherit
@@ -270,7 +271,7 @@ function setCurrentTitle() {
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
 .menu-item-activated {
   --uno: "text-$bew-text-auto bg-$bew-theme-color-auto";
 }

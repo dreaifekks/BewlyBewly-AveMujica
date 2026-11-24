@@ -9,8 +9,8 @@ import { TOP_BAR_VISIBILITY_CHANGE } from '~/constants/globalEvents'
 import { gridLayout, settings } from '~/logic'
 import type { FollowingLiveResult, List as FollowingLiveItem } from '~/models/live/getFollowingLiveList'
 import type { FeedResult, PortalLiveUser, PortalResult } from '~/models/moment/momentFeed'
+import { useSessionStore } from '~/stores/sessionStore'
 import api from '~/utils/api'
-import { getUserID } from '~/utils/main'
 import emitter from '~/utils/mitt'
 
 import MomentAvatar from './components/MomentAvatar.vue'
@@ -23,6 +23,7 @@ import { MOMENTS_TABS } from './types'
 
 const { t } = useI18n()
 const { handleBackToTop, handlePageRefresh } = useBewlyApp()
+const session = useSessionStore()
 
 /** 列数切换器可选的列数 */
 const COLUMN_OPTIONS = [2, 3, 4]
@@ -36,7 +37,8 @@ const selectedMid = computed(() => selectedUp.value?.mid ?? null)
 /* ---------- 头像栏 ---------- */
 const ups = ref<MomentsUp[]>([])
 const liveUsers = ref<MomentsLiveUser[]>([])
-const myMid = ref<string>(getUserID())
+const portalMid = ref<string>('')
+const myMid = computed(() => portalMid.value || String(session.userID ?? ''))
 const liveMids = computed(() => new Set(liveUsers.value.map(u => u.mid)))
 const followingUrl = computed(() => `https://space.bilibili.com/${myMid.value}/fans/follow`)
 const needToLoginFirst = ref(false)
@@ -77,7 +79,7 @@ async function loadStrip() {
       ups.value = normalizeUps(res.data.up_list?.items)
       portalLive = res.data.live_users?.items ?? []
       if (res.data.my_info?.mid)
-        myMid.value = String(res.data.my_info.mid)
+        portalMid.value = String(res.data.my_info.mid)
     }
   }
   else {
@@ -483,7 +485,7 @@ function jumpToLoginPage() {
   </div>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .moments-page {
   padding-bottom: 96px;
 }

@@ -2,6 +2,7 @@
 import { onKeyStroke } from '@vueuse/core'
 
 import { useBewlyApp } from '~/composables/useAppProvider'
+import { useDocumentScrollLock } from '~/composables/useDocumentScrollLock'
 
 import { toHttps } from '../momentsData'
 import type { MomentImage } from '../types'
@@ -16,6 +17,7 @@ const emit = defineEmits<{
 }>()
 
 const { mainAppRef } = useBewlyApp()
+useDocumentScrollLock()
 
 const index = ref(props.startIndex)
 const current = computed(() => props.images[index.value])
@@ -55,7 +57,7 @@ onKeyStroke('ArrowRight', () => multiple.value && go(1))
   </Teleport>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .image-viewer {
   position: fixed;
   inset: 0;
